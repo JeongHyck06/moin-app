@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { GroupCard as GroupCardData } from '../api';
+import type { Frequency, GroupCard as GroupCardData } from '../api';
 import { colors, radius, spacing } from '../theme';
 import Button from './Button';
 import ListRow from './ListRow';
@@ -12,6 +12,9 @@ const untilText = (deadline: string, now: number) => {
   const min = Math.max(0, Math.round((Date.parse(deadline) - now) / 60_000));
   return min >= 60 ? `${Math.round(min / 60)}시간` : `${min}분`;
 };
+
+export const frequencyText = (frequency: Frequency, weeklyTarget: number | null | undefined) =>
+  frequency === 'DAILY' ? '매일' : `주 ${weeklyTarget}회`;
 
 // 서버는 숫자·상태만 주고 문구는 클라이언트가 조립 (BACKEND_DESIGN.md §1)
 export function cardSubtitle(g: GroupCardData, now = Date.now()): { text: string; accent: boolean } {
@@ -32,7 +35,7 @@ export function cardSubtitle(g: GroupCardData, now = Date.now()): { text: string
       return { text: `내 인증 완료 · ${remaining}명 남음`, accent: false };
     default:
       return {
-        text: `${g.frequency === 'DAILY' ? '매일' : `주 ${g.weeklyTarget}회`} · ${period} ${g.completedCount}/${g.activeCount}`,
+        text: `${frequencyText(g.frequency, g.weeklyTarget)} · ${period} ${g.completedCount}/${g.activeCount}`,
         accent: false,
       };
   }
@@ -45,7 +48,7 @@ export default function GroupCard({ group, onPress, onCheckIn }: Props) {
   const showCta = !group.myDone && !group.joinsNextPeriod;
   return (
     <Pressable onPress={onPress} style={[styles.card, group.state === 'CRISIS' && styles.crisis]}>
-      <ListRow title={group.name} subtitle={text} subtitleColor={accent ? colors.accent : undefined} tall separator />
+      <ListRow title={group.name} subtitle={text} subtitleColor={accent ? colors.accent : undefined} bold tall separator />
       <View style={styles.meta}>
         <View style={styles.members}>
           {group.members.map((m, i) => (
