@@ -9,6 +9,12 @@ jest.mock('react-native-vision-camera', () => ({
 }));
 jest.mock('react-native-video', () => ({ __esModule: true, default: () => null }));
 
+// 패키지가 제공하는 mock 은 ESM 이라 babel 변환 뒤 default 로 들어옴
+jest.mock('@react-native-async-storage/async-storage', () => {
+  const mock = require('@react-native-async-storage/async-storage/jest');
+  return mock.default ?? mock;
+});
+
 // Firebase 는 네이티브 앱 초기화가 필요해 jest 에서는 비어 있는 상태로 둠
 jest.mock('@react-native-firebase/app', () => ({ getApps: () => [] }));
 jest.mock('@react-native-firebase/messaging', () => ({
@@ -20,3 +26,10 @@ jest.mock('@react-native-firebase/messaging', () => ({
   setBackgroundMessageHandler: () => {},
   requestPermission: async () => 1,
 }));
+
+// svg 는 네이티브 뷰라 jest 에서는 렌더링만 통과시킴
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const stub = (name) => (props) => React.createElement(name, props, props.children);
+  return { __esModule: true, default: stub('Svg'), Svg: stub('Svg'), Circle: stub('Circle') };
+});
