@@ -19,6 +19,7 @@ export type RootStackParamList = {
   Complete: { result: CheckInResult };
   Feed: { groupId: number };
   Calendar: { groupId: number };
+  NotificationSettings: undefined;
 };
 
 declare global {
