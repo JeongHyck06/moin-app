@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MOCK } from './mock';
 
 // BACKEND_DESIGN.md §4 응답 형태
@@ -55,6 +56,7 @@ export type StreakSummary = { current: number; perfect: number; pass: number; fr
 
 export type GroupDetail = {
   card: GroupCard;
+  isOwner: boolean; // 이름 변경은 방장만
   inviteCode: string;
   reminderTime: string;
   streakFreeze: boolean;
@@ -141,7 +143,6 @@ export const BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true
 
-// ponytail: 세션 토큰은 메모리에만 보관, 앱 재시작 후에도 유지하려면 AsyncStorage 추가
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -160,10 +161,31 @@ const FALLBACK: Record<number, string> = {
   415: '지원하지 않는 파일이에요',
 };
 
+const TOKEN_KEY = 'moin.token';
+
 let token: string | null = null;
-export const setToken = (t: string | null) => {
+const listeners = new Set<(t: string | null) => void>();
+
+// 세션이 끊기면 App 이 로그인 화면으로 되돌려야 해서 구독을 둠
+export function onTokenChange(fn: (t: string | null) => void) {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
+export function setToken(t: string | null) {
   token = t;
-};
+  // 저장 실패는 이번 실행에 영향이 없음, 다음 로그인 때 다시 시도
+  (t === null ? AsyncStorage.removeItem(TOKEN_KEY) : AsyncStorage.setItem(TOKEN_KEY, t)).catch(() => {});
+  listeners.forEach(fn => fn(t));
+}
+
+// 앱 시작 시 한 번, 저장된 세션을 메모리로 올림
+export async function loadToken(): Promise<string | null> {
+  token = await AsyncStorage.getItem(TOKEN_KEY).catch(() => null);
+  return token;
+}
 
 async function request<T>(method: string, path: string, headers: Record<string, string>, body?: RequestInit['body']): Promise<T> {
   // 화면 코드가 mock 여부로 분기하지 않도록 여기서만 전환, 키는 "METHOD path"
@@ -180,6 +202,10 @@ async function request<T>(method: string, path: string, headers: Record<string, 
     body,
   });
   if (!res.ok) {
+    // 만료된 세션은 화면마다 처리할 수 없으니 여기서 한 번에 로그아웃
+    if (res.status === 401 && token !== null) {
+      setToken(null);
+    }
     const err = await res.json().catch(() => null);
     throw new ApiError(err?.message ?? FALLBACK[res.status] ?? `HTTP ${res.status}`, res.status);
   }
