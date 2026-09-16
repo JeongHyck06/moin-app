@@ -76,7 +76,14 @@ export default function JoinGroupScreen({ navigation }: NativeStackScreenProps<R
             </Text>
             <View style={styles.members}>
               {preview.members.map((m, i) => (
-                <MemberAvatar key={m.userId} done={m.done} size={32} style={i > 0 && styles.overlap} />
+                <MemberAvatar
+                  key={m.userId}
+                  done={m.done}
+                  avatarUrl={m.avatarUrl}
+                  videoUrl={m.videoUrl}
+                  size={32}
+                  style={i > 0 && styles.overlap}
+                />
               ))}
             </View>
           </View>

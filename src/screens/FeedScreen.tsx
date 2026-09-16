@@ -64,7 +64,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         ))}
       </View>
       <View style={styles.header}>
-        <MemberAvatar done={current?.videoUrl != null} size={32} />
+        <MemberAvatar done={current?.videoUrl != null} avatarUrl={current?.avatarUrl} videoUrl={current?.videoUrl} size={32} />
         <View style={styles.name}>
           <Text style={styles.nameText}>{current?.nickname ?? ''}</Text>
           <Text style={styles.meta}>

@@ -52,7 +52,13 @@ export default function GroupCard({ group, onPress, onCheckIn }: Props) {
       <View style={styles.meta}>
         <View style={styles.members}>
           {group.members.map((m, i) => (
-            <MemberAvatar key={m.userId} done={m.done} style={i > 0 && styles.overlap} />
+            <MemberAvatar
+              key={m.userId}
+              done={m.done}
+              avatarUrl={m.avatarUrl}
+              videoUrl={m.videoUrl}
+              style={i > 0 && styles.overlap}
+            />
           ))}
         </View>
         <StreakBadge days={group.streak} />

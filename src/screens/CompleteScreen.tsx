@@ -24,7 +24,7 @@ export default function CompleteScreen({ navigation, route }: NativeStackScreenP
         <Text style={styles.accent}>{result.allComplete ? '마지막 1명이었어요 — 전원 완료!' : `${remaining}명 남았어요`}</Text>
         <View style={styles.members}>
           {g.members.map(m => (
-            <MemberAvatar key={m.userId} name={m.nickname} done={m.done} size={56} />
+            <MemberAvatar key={m.userId} name={m.nickname} done={m.done} avatarUrl={m.avatarUrl} videoUrl={m.videoUrl} size={56} />
           ))}
         </View>
       </View>
