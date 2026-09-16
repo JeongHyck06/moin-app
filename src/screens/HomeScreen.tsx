@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, type GroupCard as GroupCardData } from '../api';
 import GroupCard from '../components/GroupCard';
 import Header from '../components/Header';
+import { TAB_BAR_HEIGHT } from '../components/TabBar';
 import { colors, spacing } from '../theme';
 
 // Figma Home 43:43
@@ -35,7 +36,7 @@ export default function HomeScreen() {
       <FlatList
         data={groups}
         keyExtractor={g => String(g.id)}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_HEIGHT + Math.max(insets.bottom, 16) }]}
         renderItem={({ item }) => <GroupCard group={item} />}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.accent} />}
         ListEmptyComponent={loading ? undefined : <Text style={styles.empty}>아직 그룹이 없어요</Text>}
@@ -46,7 +47,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.canvas },
-  // 탭바가 absolute 로 떠 있어서 마지막 카드가 가려지지 않게 아래 여백 확보
-  list: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 120, gap: spacing.md },
+  // 하단 여백은 탭바가 absolute 라 렌더에서 safe area 를 더해 계산
+  list: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md },
   empty: { textAlign: 'center', color: colors.textSecondary, paddingTop: 80 },
 });
