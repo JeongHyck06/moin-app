@@ -2,7 +2,6 @@ import UIKit
 import FirebaseCore
 import KakaoSDKAuth
 import React
-import React_RCTLinking
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
