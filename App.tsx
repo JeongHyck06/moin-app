@@ -15,6 +15,10 @@ import CreateGroup3Screen from './src/screens/CreateGroup3Screen';
 import CreateGroup4Screen from './src/screens/CreateGroup4Screen';
 import CreateGroup5Screen from './src/screens/CreateGroup5Screen';
 import JoinGroupScreen from './src/screens/JoinGroupScreen';
+import GroupDetailScreen from './src/screens/GroupDetailScreen';
+import CameraScreen from './src/screens/CameraScreen';
+import PreviewScreen from './src/screens/PreviewScreen';
+import CompleteScreen from './src/screens/CompleteScreen';
 import { colors } from './src/theme';
 
 const theme = {
@@ -70,6 +74,10 @@ function App() {
               <Stack.Screen name="CreateGroup4" component={CreateGroup4Screen} />
               <Stack.Screen name="CreateGroup5" component={CreateGroup5Screen} />
               <Stack.Screen name="JoinGroup" component={JoinGroupScreen} />
+              <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+              <Stack.Screen name="Camera" component={CameraScreen} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="Preview" component={PreviewScreen} />
+              <Stack.Screen name="Complete" component={CompleteScreen} options={{ gestureEnabled: false }} />
             </>
           ) : (
             <Stack.Screen name="Login">{() => <LoginScreen onLogin={setUser} />}</Stack.Screen>
