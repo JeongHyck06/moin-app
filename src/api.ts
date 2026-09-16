@@ -130,6 +130,13 @@ export type NotificationKinds = {
 
 export type NotificationView = { kinds: NotificationKinds; groups: { id: number; name: string; muted: boolean }[] };
 
+export type AppVersion = {
+  minVersion: string; // 이 미만이면 강제 업데이트
+  latestVersion: string;
+  iosStoreUrl: string;
+  androidStoreUrl: string;
+};
+
 export const BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true

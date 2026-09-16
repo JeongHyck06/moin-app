@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { DarkTheme, NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, NavigationContainer, type NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import type { LoginResponse } from './src/api';
+import { registerPushToken } from './src/push';
+import { useNotificationOpen } from './src/useNotificationOpen';
+import UpdateGate from './src/components/UpdateGate';
 import type { RootStackParamList } from './src/navigation';
 import TabBar from './src/components/TabBar';
 import HomeScreen from './src/screens/HomeScreen';
@@ -54,9 +57,24 @@ function MainTabs() {
 
 function App() {
   const [user, setUser] = useState<LoginResponse | null>(null);
+  const nav = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  useNotificationOpen(nav, user !== null);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    // 로그인 뒤에야 Authorization 헤더가 붙어 토큰을 등록할 수 있음
+    let off = () => {};
+    registerPushToken().then(unsubscribe => {
+      off = unsubscribe;
+    });
+    return () => off();
+  }, [user]);
+
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={theme}>
+      <NavigationContainer theme={theme} ref={nav}>
         <StatusBar barStyle="light-content" />
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {/* 로그인 여부로 스택 전환, 토큰은 메모리에만 있어 앱을 껐다 켜면 다시 로그인 */}
@@ -81,6 +99,7 @@ function App() {
             <Stack.Screen name="Login">{() => <LoginScreen onLogin={setUser} />}</Stack.Screen>
           )}
         </Stack.Navigator>
+        <UpdateGate />
       </NavigationContainer>
     </SafeAreaProvider>
   );

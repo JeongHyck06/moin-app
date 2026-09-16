@@ -73,3 +73,7 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Firebase 설정, 각자 콘솔에서 받아 넣는다
+google-services.json
+GoogleService-Info.plist
