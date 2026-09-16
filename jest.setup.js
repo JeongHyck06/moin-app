@@ -8,3 +8,15 @@ jest.mock('react-native-vision-camera', () => ({
   useVideoOutput: () => ({ createRecorder: async () => ({ startRecording: async () => {}, stopRecording: async () => {} }) }),
 }));
 jest.mock('react-native-video', () => ({ __esModule: true, default: () => null }));
+
+// Firebase 는 네이티브 앱 초기화가 필요해 jest 에서는 비어 있는 상태로 둠
+jest.mock('@react-native-firebase/app', () => ({ getApps: () => [] }));
+jest.mock('@react-native-firebase/messaging', () => ({
+  getMessaging: () => ({}),
+  getToken: async () => 'token',
+  onTokenRefresh: () => () => {},
+  onNotificationOpenedApp: () => () => {},
+  getInitialNotification: async () => null,
+  setBackgroundMessageHandler: () => {},
+  requestPermission: async () => 1,
+}));
