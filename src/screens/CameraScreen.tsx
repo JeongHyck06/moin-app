@@ -81,7 +81,7 @@ export default function CameraScreen({ navigation, route }: NativeStackScreenPro
       </View>
       <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 48) }]}>
         <Text style={styles.caption}>{remaining === null ? `탭하면 ${DURATION}초 자동 녹화` : `녹화 중 · ${remaining}초`}</Text>
-        <RecordButton recording={remaining !== null} onPress={record} />
+        <RecordButton recording={remaining !== null} duration={DURATION} onPress={record} />
       </View>
     </View>
   );

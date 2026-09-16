@@ -33,7 +33,7 @@ export default function MyPageScreen() {
       <Header title="마이페이지" />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_HEIGHT + Math.max(insets.bottom, 16) }]}>
         <View style={[card, styles.profile]}>
-          <MemberAvatar done size={64} />
+          <MemberAvatar done avatarUrl={profile?.avatarUrl} size={64} />
           <Text style={styles.nickname}>{profile?.nickname ?? ''}</Text>
           <StreakBadge
             days={profile?.totalStreak ?? 0}

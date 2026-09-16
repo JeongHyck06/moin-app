@@ -20,6 +20,7 @@ export type RootStackParamList = {
   Feed: { groupId: number };
   Calendar: { groupId: number };
   NotificationSettings: undefined;
+  EditGroupName: { id: number; name: string };
 };
 
 declare global {
