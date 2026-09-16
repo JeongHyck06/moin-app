@@ -110,6 +110,26 @@ export type Calendar = {
   perfectRate: number;
 };
 
+export type Profile = {
+  id: number;
+  nickname: string;
+  avatarUrl: string | null;
+  totalStreak: number; // 내 그룹들의 현재 스트릭 합
+  totalCheckIns: number;
+};
+
+export type MyGroup = { id: number; name: string; streak: number; achievementRate: number };
+
+export type NotificationKinds = {
+  reminder: boolean;
+  social: boolean;
+  crisis: boolean;
+  lastCall: boolean;
+  allComplete: boolean;
+};
+
+export type NotificationView = { kinds: NotificationKinds; groups: { id: number; name: string; muted: boolean }[] };
+
 export const BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true
