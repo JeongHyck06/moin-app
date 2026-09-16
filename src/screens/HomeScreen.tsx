@@ -43,7 +43,13 @@ export default function HomeScreen() {
         data={groups}
         keyExtractor={g => String(g.id)}
         contentContainerStyle={[styles.list, { paddingBottom: TAB_BAR_HEIGHT + Math.max(insets.bottom, 16) }]}
-        renderItem={({ item }) => <GroupCard group={item} />}
+        renderItem={({ item }) => (
+          <GroupCard
+            group={item}
+            onPress={() => navigation.navigate('GroupDetail', { id: item.id })}
+            onCheckIn={() => navigation.navigate('Camera', { groupId: item.id, name: item.name })}
+          />
+        )}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.accent} />}
         ListEmptyComponent={loading ? undefined : <Text style={styles.empty}>아직 그룹이 없어요</Text>}
         ListFooterComponent={
