@@ -89,6 +89,11 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
+        // 카카오 키는 gradle.properties 한 곳에서만 읽는다, 비어 있어도 빌드는 통과
+        def kakaoAppKey = project.findProperty("KAKAO_APP_KEY") ?: ""
+        manifestPlaceholders = [KAKAO_APP_KEY: kakaoAppKey]
+        resValue "string", "kakao_app_key", kakaoAppKey
     }
     signingConfigs {
         debug {

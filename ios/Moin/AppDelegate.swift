@@ -1,6 +1,8 @@
 import UIKit
 import FirebaseCore
+import KakaoSDKAuth
 import React
+import React_RCTLinking
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
@@ -36,6 +38,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     )
 
     return true
+  }
+
+  // 카카오톡 앱에서 돌아오는 인증 콜백, 그 외 URL 은 RN Linking 으로
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    if AuthApi.isKakaoTalkLoginUrl(url) {
+      return AuthController.handleOpenUrl(url: url)
+    }
+    return RCTLinkingManager.application(app, open: url, options: options)
   }
 }
 
