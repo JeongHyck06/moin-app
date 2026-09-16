@@ -17,6 +17,8 @@ export type RootStackParamList = {
   Camera: { groupId: number; name: string };
   Preview: { groupId: number; name: string; path: string }; // path 는 file:// 없는 파일시스템 경로
   Complete: { result: CheckInResult };
+  Feed: { groupId: number };
+  Calendar: { groupId: number };
 };
 
 declare global {
