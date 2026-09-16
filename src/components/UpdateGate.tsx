@@ -30,7 +30,11 @@ export default function UpdateGate() {
 
   const force = mode === 'force';
   return (
-    <Modal visible={mode !== null} transparent animationType="fade" onRequestClose={() => !force && setMode(null)}>
+    <Modal visible={mode !== null} transparent animationType="fade" onRequestClose={() => {
+        if (!force) {
+          setMode(null);
+        }
+      }}>
       <View style={styles.dim}>
         <View style={styles.sheet}>
           <Text style={styles.title}>{force ? '업데이트가 필요해요' : '새 버전이 나왔어요'}</Text>
