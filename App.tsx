@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StatusBar, StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -21,6 +21,8 @@ import PreviewScreen from './src/screens/PreviewScreen';
 import CompleteScreen from './src/screens/CompleteScreen';
 import FeedScreen from './src/screens/FeedScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
+import MyPageScreen from './src/screens/MyPageScreen';
+import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
 import { colors } from './src/theme';
 
 const theme = {
@@ -40,15 +42,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // 렌더 안에서 컴포넌트를 만들면 탭바가 매번 리마운트됨
 const renderTabBar = (props: BottomTabBarProps) => <TabBar {...props} />;
-
-// Phase 5 에서 교체
-function MyPageScreen() {
-  return (
-    <View style={styles.placeholder}>
-      <Text style={styles.placeholderText}>마이페이지</Text>
-    </View>
-  );
-}
 
 function MainTabs() {
   return (
@@ -82,6 +75,7 @@ function App() {
               <Stack.Screen name="Complete" component={CompleteScreen} options={{ gestureEnabled: false }} />
               <Stack.Screen name="Feed" component={FeedScreen} options={{ animation: 'fade' }} />
               <Stack.Screen name="Calendar" component={CalendarScreen} />
+              <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
             </>
           ) : (
             <Stack.Screen name="Login">{() => <LoginScreen onLogin={setUser} />}</Stack.Screen>
@@ -91,10 +85,5 @@ function App() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.canvas },
-  placeholderText: { color: colors.textSecondary },
-});
 
 export default App;
