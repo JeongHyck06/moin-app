@@ -55,6 +55,8 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
               key={m.userId}
               name={m.nickname}
               done={m.done}
+              avatarUrl={m.avatarUrl}
+              videoUrl={m.videoUrl}
               size={56}
               progress={g.frequency === 'WEEKLY' ? `${m.doneCount}/${g.weeklyTarget}` : undefined}
             />
@@ -75,6 +77,15 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
             separator
             onPress={() => navigation.navigate('Calendar', { groupId: g.id })}
           />
+          {detail.isOwner && (
+            <ListRow
+              title="그룹 이름 변경"
+              detail={g.name}
+              chevron
+              separator
+              onPress={() => navigation.navigate('EditGroupName', { id: g.id, name: g.name })}
+            />
+          )}
           <ListRow
             title="초대코드"
             detail={detail.inviteCode}
