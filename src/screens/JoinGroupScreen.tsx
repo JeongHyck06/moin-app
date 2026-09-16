@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ElementRef } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { api, ApiError, type GroupDetail, type InvitePreview } from '../api';
+import { api, type GroupDetail, type InvitePreview } from '../api';
 import type { RootStackParamList } from '../navigation';
 import Button from '../components/Button';
 import { frequencyText } from '../components/GroupCard';
@@ -32,7 +32,7 @@ export default function JoinGroupScreen({ navigation }: NativeStackScreenProps<R
     let alive = true; // 코드가 바뀐 뒤 도착한 이전 응답은 버림
     api<InvitePreview>('GET', `/groups/invite/${code}`)
       .then(p => alive && setPreview(p))
-      .catch(e => alive && setError(e instanceof ApiError && e.status === 404 ? '초대코드를 찾을 수 없어요' : (e as Error).message));
+      .catch(e => alive && setError((e as Error).message));
     return () => {
       alive = false;
     };
