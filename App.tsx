@@ -19,6 +19,8 @@ import GroupDetailScreen from './src/screens/GroupDetailScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import PreviewScreen from './src/screens/PreviewScreen';
 import CompleteScreen from './src/screens/CompleteScreen';
+import FeedScreen from './src/screens/FeedScreen';
+import CalendarScreen from './src/screens/CalendarScreen';
 import { colors } from './src/theme';
 
 const theme = {
@@ -78,6 +80,8 @@ function App() {
               <Stack.Screen name="Camera" component={CameraScreen} options={{ animation: 'slide_from_bottom' }} />
               <Stack.Screen name="Preview" component={PreviewScreen} />
               <Stack.Screen name="Complete" component={CompleteScreen} options={{ gestureEnabled: false }} />
+              <Stack.Screen name="Feed" component={FeedScreen} options={{ animation: 'fade' }} />
+              <Stack.Screen name="Calendar" component={CalendarScreen} />
             </>
           ) : (
             <Stack.Screen name="Login">{() => <LoginScreen onLogin={setUser} />}</Stack.Screen>
