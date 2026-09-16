@@ -13,7 +13,7 @@ import ProgressBar from '../components/ProgressBar';
 import StreakBadge from '../components/StreakBadge';
 import { card, colors, spacing } from '../theme';
 
-// Figma Group Detail (46:338), 피드·기록 행은 Phase 4 에서 연결
+// Figma Group Detail (46:338)
 export default function GroupDetailScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'GroupDetail'>) {
   const { id } = route.params;
   const insets = useSafeAreaInsets();
@@ -61,8 +61,20 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
           ))}
         </View>
         <View style={card}>
-          <ListRow title="피드" detail={`${period} 영상 ${detail.periodVideoCount}개`} chevron separator />
-          <ListRow title="기록" detail={`이번 달 ${detail.monthCompletedPeriods}/${detail.monthClosedPeriods}`} chevron separator />
+          <ListRow
+            title="피드"
+            detail={`${period} 영상 ${detail.periodVideoCount}개`}
+            chevron
+            separator
+            onPress={() => navigation.navigate('Feed', { groupId: g.id })}
+          />
+          <ListRow
+            title="기록"
+            detail={`이번 달 ${detail.monthCompletedPeriods}/${detail.monthClosedPeriods}`}
+            chevron
+            separator
+            onPress={() => navigation.navigate('Calendar', { groupId: g.id })}
+          />
           <ListRow
             title="초대코드"
             detail={detail.inviteCode}
