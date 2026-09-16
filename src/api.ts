@@ -79,6 +79,15 @@ export type InvitePreview = {
   joinsFrom: string;
 };
 
+export type CheckInResult = {
+  id: number;
+  videoUrl: string;
+  logicalDate: string;
+  allComplete: boolean;
+  streak: StreakSummary; // 마감 전 값, "오늘 하면 N일" 은 current + 1
+  group: GroupCard;
+};
+
 export const BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true
@@ -92,7 +101,7 @@ export class ApiError extends Error {
   }
 }
 
-// 서버 기본 오류 응답(@Valid 실패, 404, 409)에는 message 가 없어 상태코드별 한국어 대체 문구를 둠
+// 서버는 message 를 항상 주지만 네트워크 계층 오류 등 본문이 없을 때를 위한 상태코드별 대체 문구
 const FALLBACK: Record<number, string> = {
   400: '입력값을 확인해 주세요',
   401: '다시 로그인해 주세요',
@@ -107,11 +116,7 @@ export const setToken = (t: string | null) => {
   token = t;
 };
 
-export async function api<T>(
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
-  path: string,
-  body?: unknown,
-): Promise<T> {
+async function request<T>(method: string, path: string, headers: Record<string, string>, body?: RequestInit['body']): Promise<T> {
   // 화면 코드가 mock 여부로 분기하지 않도록 여기서만 전환, 키는 "METHOD path"
   if (USE_MOCK) {
     const hit = MOCK[`${method} ${path}`];
@@ -122,11 +127,8 @@ export async function api<T>(
   }
   const res = await fetch(BASE_URL + path, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: { ...headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);
@@ -134,3 +136,15 @@ export async function api<T>(
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }
+
+export function api<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown): Promise<T> {
+  return request<T>(method, path, { 'Content-Type': 'application/json' }, body === undefined ? undefined : JSON.stringify(body));
+}
+
+// multipart 는 fetch 가 boundary 를 붙이도록 Content-Type 을 지정하지 않음
+export function upload<T>(path: string, form: FormData): Promise<T> {
+  return request<T>('POST', path, {}, form);
+}
+
+// "/videos/x.mp4" 상대 경로를 재생 가능한 절대 URL 로, 토큰 불필요
+export const videoUrl = (path: string) => BASE_URL + path;
