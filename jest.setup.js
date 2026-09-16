@@ -31,5 +31,11 @@ jest.mock('@react-native-firebase/messaging', () => ({
 jest.mock('react-native-svg', () => {
   const React = require('react');
   const stub = (name) => (props) => React.createElement(name, props, props.children);
-  return { __esModule: true, default: stub('Svg'), Svg: stub('Svg'), Circle: stub('Circle') };
+  return { __esModule: true, default: stub('Svg'), Svg: stub('Svg'), Circle: stub('Circle'), Path: stub('Path') };
 });
+
+// 카카오 SDK 는 네이티브 모듈, 키가 없으면 호출되지도 않음
+jest.mock('@react-native-seoul/kakao-login', () => ({
+  login: async () => ({ accessToken: 'kakao-access-token' }),
+  logout: async () => 'ok',
+}));
