@@ -1,0 +1,52 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api, type GroupCard as GroupCardData } from '../api';
+import GroupCard from '../components/GroupCard';
+import Header from '../components/Header';
+import { colors, spacing } from '../theme';
+
+// Figma Home 43:43
+export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const [groups, setGroups] = useState<GroupCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setGroups(await api<GroupCardData[]>('GET', '/groups'));
+    } catch (e) {
+      Alert.alert('불러오기 실패', (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const remaining = groups.filter(g => !g.myDone && !g.joinsNextPeriod).length;
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <Header title="모인" subtitle={`오늘 남은 인증 ${remaining}개`} />
+      <FlatList
+        data={groups}
+        keyExtractor={g => String(g.id)}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => <GroupCard group={item} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.accent} />}
+        ListEmptyComponent={loading ? undefined : <Text style={styles.empty}>아직 그룹이 없어요</Text>}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.canvas },
+  // 탭바가 absolute 로 떠 있어서 마지막 카드가 가려지지 않게 아래 여백 확보
+  list: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 120, gap: spacing.md },
+  empty: { textAlign: 'center', color: colors.textSecondary, paddingTop: 80 },
+});
