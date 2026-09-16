@@ -1,4 +1,4 @@
-import type { Frequency, GroupDetail } from './api';
+import type { CheckInResult, Frequency, GroupDetail } from './api';
 
 // 그룹 만들기 위자드는 단계마다 파라미터로 입력값 전달, 별도 store 없음
 export type CreateGroupStep3Params = { name: string; frequency: Frequency; weeklyTarget?: number };
@@ -13,6 +13,10 @@ export type RootStackParamList = {
   CreateGroup4: CreateGroupStep4Params;
   CreateGroup5: { group: GroupDetail };
   JoinGroup: undefined;
+  GroupDetail: { id: number };
+  Camera: { groupId: number; name: string };
+  Preview: { groupId: number; name: string; path: string }; // path 는 file:// 없는 파일시스템 경로
+  Complete: { result: CheckInResult };
 };
 
 declare global {
