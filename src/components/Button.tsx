@@ -4,7 +4,7 @@ import { colors, radius } from '../theme';
 type Props = {
   label: string;
   onPress?: () => void;
-  variant?: 'accent' | 'kakao';
+  variant?: 'accent' | 'kakao' | 'secondary';
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 };
@@ -27,6 +27,11 @@ const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center', paddingVertical: 15, borderRadius: radius.full },
   accent: { backgroundColor: colors.accent },
   kakao: { backgroundColor: colors.kakao },
+  secondary: {
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(166,166,166,0.4)',
+  },
   dim: { opacity: 0.6 },
   label: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   kakaoLabel: { color: colors.kakaoText },

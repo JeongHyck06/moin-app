@@ -41,21 +41,82 @@ export type GroupCard = {
   members: MemberStatus[];
 };
 
+export type CreateGroupRequest = {
+  name: string;
+  frequency: Frequency;
+  weeklyTarget?: number;
+  resetTime?: string;
+  reminderTime?: string;
+  allowedAbsences?: number;
+  streakFreeze?: boolean;
+};
+
+export type StreakSummary = { current: number; perfect: number; pass: number; frozen: number; longest: number };
+
+export type GroupDetail = {
+  card: GroupCard;
+  inviteCode: string;
+  reminderTime: string;
+  streakFreeze: boolean;
+  muted: boolean;
+  streak: StreakSummary;
+  threshold: number;
+  periodVideoCount: number;
+  monthCompletedPeriods: number;
+  monthClosedPeriods: number;
+};
+
+export type InvitePreview = {
+  id: number;
+  name: string;
+  frequency: Frequency;
+  weeklyTarget: number | null;
+  resetTime: string;
+  memberCount: number;
+  streak: number;
+  members: MemberStatus[];
+  alreadyMember: boolean;
+  joinsFrom: string;
+};
+
+export type CheckInResult = {
+  id: number;
+  videoUrl: string;
+  logicalDate: string;
+  allComplete: boolean;
+  streak: StreakSummary; // 마감 전 값, "오늘 하면 N일" 은 current + 1
+  group: GroupCard;
+};
+
 export const BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
-export const USE_MOCK = true; // 백엔드 붙으면 false
+export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true
 
 // ponytail: 세션 토큰은 메모리에만 보관, 앱 재시작 후에도 유지하려면 AsyncStorage 추가
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+// 서버는 message 를 항상 주지만 네트워크 계층 오류 등 본문이 없을 때를 위한 상태코드별 대체 문구
+const FALLBACK: Record<number, string> = {
+  400: '입력값을 확인해 주세요',
+  401: '다시 로그인해 주세요',
+  403: '이 그룹의 멤버가 아니에요',
+  404: '찾을 수 없어요',
+  409: '이미 처리된 요청이에요',
+  415: '지원하지 않는 파일이에요',
+};
+
 let token: string | null = null;
 export const setToken = (t: string | null) => {
   token = t;
 };
 
-export async function api<T>(
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
-  path: string,
-  body?: unknown,
-): Promise<T> {
+async function request<T>(method: string, path: string, headers: Record<string, string>, body?: RequestInit['body']): Promise<T> {
   // 화면 코드가 mock 여부로 분기하지 않도록 여기서만 전환, 키는 "METHOD path"
   if (USE_MOCK) {
     const hit = MOCK[`${method} ${path}`];
@@ -66,16 +127,24 @@ export async function api<T>(
   }
   const res = await fetch(BASE_URL + path, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: { ...headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body,
   });
   if (!res.ok) {
-    // ResponseStatusException 은 message 에, @Valid 실패는 error 에만 문구가 실림
     const err = await res.json().catch(() => null);
-    throw new Error(err?.message ?? err?.error ?? `HTTP ${res.status}`);
+    throw new ApiError(err?.message ?? FALLBACK[res.status] ?? `HTTP ${res.status}`, res.status);
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }
+
+export function api<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown): Promise<T> {
+  return request<T>(method, path, { 'Content-Type': 'application/json' }, body === undefined ? undefined : JSON.stringify(body));
+}
+
+// multipart 는 fetch 가 boundary 를 붙이도록 Content-Type 을 지정하지 않음
+export function upload<T>(path: string, form: FormData): Promise<T> {
+  return request<T>('POST', path, {}, form);
+}
+
+// "/videos/x.mp4" 상대 경로를 재생 가능한 절대 URL 로, 토큰 불필요
+export const videoUrl = (path: string) => BASE_URL + path;

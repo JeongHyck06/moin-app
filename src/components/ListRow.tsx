@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '../theme';
 
@@ -6,6 +7,9 @@ type Props = {
   subtitle?: string;
   subtitleColor?: string;
   detail?: string; // 우측 보조 텍스트 "오늘 영상 3개"
+  detailColor?: string;
+  trailing?: ReactNode; // 체크, 스테퍼, 스위치 같은 우측 컨트롤
+  bold?: boolean;
   chevron?: boolean;
   tall?: boolean;
   separator?: boolean;
@@ -13,7 +17,19 @@ type Props = {
 };
 
 // iOS 그룹형 리스트 Row (Figma Row 34:475)
-export default function ListRow({ title, subtitle, subtitleColor, detail, chevron, tall, separator, onPress }: Props) {
+export default function ListRow({
+  title,
+  subtitle,
+  subtitleColor,
+  detail,
+  detailColor,
+  trailing,
+  bold,
+  chevron,
+  tall,
+  separator,
+  onPress,
+}: Props) {
   return (
     <>
       <Pressable
@@ -22,12 +38,15 @@ export default function ListRow({ title, subtitle, subtitleColor, detail, chevro
         style={({ pressed }) => [styles.row, tall && styles.tall, pressed && styles.pressed]}
       >
         <View style={styles.texts}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, bold && styles.bold]}>{title}</Text>
           {subtitle !== undefined && (
             <Text style={[styles.subtitle, subtitleColor !== undefined && { color: subtitleColor }]}>{subtitle}</Text>
           )}
         </View>
-        {detail !== undefined && <Text style={styles.detail}>{detail}</Text>}
+        {detail !== undefined && (
+          <Text style={[styles.detail, detailColor !== undefined && { color: detailColor }]}>{detail}</Text>
+        )}
+        {trailing}
         {chevron && <Text style={styles.chevron}>›</Text>}
       </Pressable>
       {separator && <View style={styles.separator} />}
@@ -47,9 +66,10 @@ const styles = StyleSheet.create({
   tall: { paddingVertical: 14 },
   pressed: { opacity: 0.6 },
   texts: { flex: 1, gap: 2 },
-  title: { fontSize: 17, fontWeight: '600', color: colors.textPrimary },
+  title: { fontSize: 17, color: colors.textPrimary },
+  bold: { fontWeight: '600' },
   subtitle: { fontSize: 15, color: colors.textSecondary },
-  detail: { fontSize: 17, color: colors.textSecondary },
+  detail: { fontSize: 17, fontWeight: '500', color: colors.textSecondary },
   chevron: { fontSize: 22, lineHeight: 24, color: colors.textTertiary },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: spacing.md, backgroundColor: colors.separator },
 });

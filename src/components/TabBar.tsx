@@ -4,13 +4,17 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { colors, radius } from '../theme';
 
 const INACTIVE = '#F5F5F5';
+const PILL = 62; // 탭 54 + 안쪽 여백 4*2
+const TOP = 16;
+// 목록 화면이 하단 여백을 잡을 때 쓰는 값, safe area 는 호출 쪽에서 더함
+export const TAB_BAR_HEIGHT = TOP + PILL;
 
 // 떠 있는 알약형 탭바 (Figma Tab Bar 34:86), 심볼은 디자인의 placeholder(마름모/원)를 도형으로 그림
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   // 알약 바깥 투명 영역(box-none)은 터치를 아래 리스트로 흘려보냄
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+    <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, TOP) }]}>
       <View style={styles.pill}>
         {state.routes.map((route, i) => {
           const active = state.index === i;
@@ -34,7 +38,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingTop: 16 },
+  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingTop: TOP },
   pill: {
     flexDirection: 'row',
     padding: 4,
