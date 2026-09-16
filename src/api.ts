@@ -88,6 +88,28 @@ export type CheckInResult = {
   group: GroupCard;
 };
 
+export type FeedMember = {
+  userId: number;
+  nickname: string;
+  avatarUrl: string | null;
+  checkInId: number | null; // 영상 없으면 세 필드 모두 null
+  videoUrl: string | null;
+  createdAt: string | null;
+};
+
+export type Feed = { date: string; completedCount: number; activeCount: number; members: FeedMember[] };
+
+export type Period = { start: string; end: string; status: PeriodStatus }; // end 는 배타
+
+export type Calendar = {
+  month: string;
+  today: string;
+  periods: Period[];
+  totalCheckIns: number;
+  longestStreak: number;
+  perfectRate: number;
+};
+
 export const BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true
