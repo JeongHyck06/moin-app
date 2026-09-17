@@ -3,6 +3,7 @@
 jest.mock('react-native-vision-camera', () => ({
   Camera: () => null,
   CommonResolutions: { HD_16_9: { width: 720, height: 1280 } },
+  useCameraDevice: () => ({ id: 'test-camera' }),
   useCameraPermission: () => ({ hasPermission: true, canRequestPermission: false, requestPermission: async () => true }),
   useMicrophonePermission: () => ({ hasPermission: true, canRequestPermission: false, requestPermission: async () => true }),
   useVideoOutput: () => ({ createRecorder: async () => ({ startRecording: async () => {}, stopRecording: async () => {} }) }),

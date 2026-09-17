@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   Camera,
   CommonResolutions,
+  useCameraDevice,
   useCameraPermission,
   useMicrophonePermission,
   useVideoOutput,
@@ -24,6 +25,8 @@ export default function CameraScreen({ navigation, route }: NativeStackScreenPro
   const cam = useCameraPermission();
   const mic = useMicrophonePermission();
   const [position, setPosition] = useState<'front' | 'back'>('front');
+  // 시뮬레이터에는 카메라가 없어 undefined 가 나온다, 그때는 미리보기 대신 안내만
+  const device = useCameraDevice(position);
   const [remaining, setRemaining] = useState<number | null>(null); // null 이면 대기
   const videoOutput = useVideoOutput({
     targetResolution: CommonResolutions.HD_16_9,
@@ -70,19 +73,33 @@ export default function CameraScreen({ navigation, route }: NativeStackScreenPro
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <TopBar title={name} onClose={() => navigation.goBack()} onFlip={() => setPosition(p => (p === 'front' ? 'back' : 'front'))} />
       <View style={styles.preview}>
-        {cam.hasPermission ? (
-          <Camera style={StyleSheet.absoluteFill} device={position} isActive outputs={[videoOutput]} />
+        {device === undefined ? (
+          <>
+            <Text style={styles.placeholder}>이 기기에서는 카메라를 쓸 수 없어요</Text>
+            <Button label="닫기" variant="secondary" style={styles.placeholderButton} onPress={() => navigation.goBack()} />
+          </>
+        ) : cam.hasPermission ? (
+          // orientationSource 기본값 device 는 가속도계를 구독해서 시뮬레이터에서 터진다, 앱이 세로 고정이라 추적할 이유도 없음
+          <Camera
+            style={StyleSheet.absoluteFill}
+            device={device}
+            isActive
+            outputs={[videoOutput]}
+            orientationSource="custom"
+          />
         ) : (
           <>
             <Text style={styles.placeholder}>카메라 권한이 필요해요</Text>
-            {!cam.canRequestPermission && <Button label="설정 열기" variant="secondary" onPress={() => Linking.openSettings()} />}
+            {!cam.canRequestPermission && <Button label="설정 열기" variant="secondary" style={styles.placeholderButton} onPress={() => Linking.openSettings()} />}
           </>
         )}
       </View>
-      <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 48) }]}>
-        <Text style={styles.caption}>{remaining === null ? `탭하면 ${DURATION}초 자동 녹화` : `녹화 중 · ${remaining}초`}</Text>
-        <RecordButton recording={remaining !== null} duration={DURATION} onPress={record} />
-      </View>
+      {device !== undefined && (
+        <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 48) }]}>
+          <Text style={styles.caption}>{remaining === null ? `탭하면 ${DURATION}초 자동 녹화` : `녹화 중 · ${remaining}초`}</Text>
+          <RecordButton recording={remaining !== null} duration={DURATION} onPress={record} />
+        </View>
+      )}
     </View>
   );
 }
@@ -91,6 +108,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: BG },
   preview: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, overflow: 'hidden' },
   placeholder: { fontSize: 13, color: 'rgba(255,255,255,0.35)' },
+  // Button 은 화면 폭을 채우는 전제라 가운데 정렬로 쓰면 좌우 여백이 없다
+  placeholderButton: { paddingHorizontal: 28 },
   controls: { alignItems: 'center', gap: 16, paddingTop: 16 },
   caption: { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
 });
