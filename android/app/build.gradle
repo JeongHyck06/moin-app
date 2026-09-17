@@ -2,6 +2,10 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// 값은 저장소에 없는 app/.env.local 에서 온다, gradle 을 직접 돌릴 때 쓰는 기본값이고 ENVFILE 환경변수가 우선
+project.ext.envConfigFiles = [debug: ".env.local", release: ".env.prod"]
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+
 // google-services.json 은 저장소에 없음, 파일을 넣으면 그때부터 FCM 이 붙는다
 if (file("google-services.json").exists()) {
     apply plugin: "com.google.gms.google-services"
@@ -83,6 +87,9 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.moin"
+    buildFeatures {
+        buildConfig true
+    }
     defaultConfig {
         applicationId "com.moin"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -90,8 +97,8 @@ android {
         versionCode 1
         versionName "1.0"
 
-        // 카카오 키는 gradle.properties 한 곳에서만 읽는다, 비어 있어도 빌드는 통과
-        def kakaoAppKey = project.findProperty("KAKAO_APP_KEY") ?: ""
+        // 키가 없으면 빈 문자열, manifest 스킴만 안 붙고 빌드는 통과
+        def kakaoAppKey = project.env.get("KAKAO_APP_KEY") ?: ""
         manifestPlaceholders = [KAKAO_APP_KEY: kakaoAppKey]
         resValue "string", "kakao_app_key", kakaoAppKey
     }

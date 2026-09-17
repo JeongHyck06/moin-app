@@ -77,3 +77,12 @@ yarn-error.log
 # Firebase 설정, 각자 콘솔에서 받아 넣는다
 google-services.json
 GoogleService-Info.plist
+
+# 환경별 설정, .env.example 을 복사해서 채운다
+.env
+.env.local
+.env.dev
+.env.prod
+
+# react-native-config 가 빌드마다 새로 만드는 파일
+ios/tmp.xcconfig
