@@ -39,3 +39,10 @@ jest.mock('@react-native-seoul/kakao-login', () => ({
   login: async () => ({ accessToken: 'kakao-access-token' }),
   logout: async () => 'ok',
 }));
+
+// env 는 네이티브 빌드가 주입하는 값이라 jest 에서는 .env.local 과 같은 값을 넣어준다
+// 카카오 키는 비워서 키 없는 경로(개발용 닉네임 로그인)를 그대로 타게 둔다
+jest.mock('react-native-config', () => ({
+  __esModule: true,
+  default: { KAKAO_APP_KEY: '', API_BASE_URL: 'http://localhost:8080' },
+}));
