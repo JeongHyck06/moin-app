@@ -23,7 +23,8 @@ export default function StreakBadge({ days, size = 'medium', detail }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 2 },
+  // 보조 라인이 숫자보다 길어서, 가운데 정렬을 안 주면 아이콘+숫자가 왼쪽으로 붙는다 (Figma 43:42)
+  wrap: { gap: 2, alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   days: { fontSize: 22, fontWeight: '900', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
   daysLarge: { fontSize: 34 },
