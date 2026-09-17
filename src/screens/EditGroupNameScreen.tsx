@@ -32,7 +32,7 @@ export default function EditGroupNameScreen({ navigation, route }: NativeStackSc
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 34) }]}
+      style={[styles.screen, { paddingTop: insets.top }]}
     >
       <Header title="그룹 이름 변경" small />
       <View style={styles.content}>
@@ -49,7 +49,8 @@ export default function EditGroupNameScreen({ navigation, route }: NativeStackSc
         />
         <Text style={styles.help}>최대 {MAX}자 · 방장만 바꿀 수 있어요</Text>
       </View>
-      <View style={styles.cta}>
+      {/* KeyboardAvoidingView 가 behavior=padding 에서 자기 paddingBottom 으로 덮어써서, 하단 인셋은 여기서 준다 */}
+      <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 34) }]}>
         <Button label="저장" disabled={busy || trimmed.length === 0 || trimmed === initial} onPress={save} />
       </View>
     </KeyboardAvoidingView>

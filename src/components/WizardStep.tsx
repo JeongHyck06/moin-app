@@ -24,7 +24,7 @@ export default function WizardStep({ step, title, subtitle, children, hint, note
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 34) }]}
+      style={[styles.screen, { paddingTop: insets.top }]}
     >
       <Header title="그룹 만들기" small />
       <View style={styles.content}>
@@ -42,7 +42,8 @@ export default function WizardStep({ step, title, subtitle, children, hint, note
         {hint !== undefined && <Text style={styles.hint}>{hint}</Text>}
         {note !== undefined && <Text style={styles.note}>{note}</Text>}
       </View>
-      <View style={styles.cta}>
+      {/* KeyboardAvoidingView 가 behavior=padding 에서 자기 paddingBottom 으로 덮어써서, 하단 인셋은 여기서 준다 */}
+      <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 34) }]}>
         <Button label={cta.label} onPress={cta.onPress} disabled={cta.disabled} />
         {secondary && <Button label={secondary.label} onPress={secondary.onPress} variant="secondary" />}
       </View>
