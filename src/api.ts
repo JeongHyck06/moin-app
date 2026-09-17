@@ -140,7 +140,7 @@ export type AppVersion = {
   androidStoreUrl: string;
 };
 
-// 주소는 .env.local (dev·prod 는 각 파일) 의 API_BASE_URL 에서 온다
+// 주소는 .env.local (운영 빌드는 .env.prod) 의 API_BASE_URL 에서 온다
 // Android 에뮬레이터에서 localhost 는 에뮬레이터 자신이라 호스트 PC 주소인 10.0.2.2 로 바꿔야 한다
 export const BASE_URL =
   Platform.OS === 'android'
