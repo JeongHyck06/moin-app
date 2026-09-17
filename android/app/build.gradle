@@ -2,6 +2,19 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// media3 를 두 라이브러리가 서로 다른 버전으로 요구한다
+// vision-camera 의 CameraX 1.7.0-alpha03 은 media3-muxer 1.9.0 (Media3MuxerImpl 이 MediaMuxerCompat 을 씀)
+// react-native-video 6.19.2 는 media3-exoplayer 1.8.0 소스 기준 (1.9.0 으로 올리면 DefaultLoadControl 컴파일 실패)
+// 그래서 exoplayer 계열만 1.8.0 으로 내리고 나머지는 1.9.0 그대로 둔다
+// ponytail: 버전 섞기라 미봉책, react-native-video 가 media3 1.9.0 을 지원하면 이 블록 삭제
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "androidx.media3" && details.requested.name.startsWith("media3-exoplayer")) {
+            details.useVersion "1.8.0"
+        }
+    }
+}
+
 // 값은 저장소에 없는 app/.env.local 에서 온다, gradle 을 직접 돌릴 때 쓰는 기본값이고 ENVFILE 환경변수가 우선
 project.ext.envConfigFiles = [debug: ".env.local", release: ".env.prod"]
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
