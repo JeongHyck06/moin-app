@@ -144,8 +144,8 @@ export type AppVersion = {
 // Android 에뮬레이터에서 localhost 는 에뮬레이터 자신이라 호스트 PC 주소인 10.0.2.2 로 바꿔야 한다
 export const BASE_URL =
   Platform.OS === 'android'
-    ? (Config.API_BASE_URL ?? '').replace('localhost', '10.0.2.2')
-    : Config.API_BASE_URL ?? '';
+    ? (Config.API_BASE_URL ?? '').replace(/\/$/, '').replace('://localhost', '://10.0.2.2')
+    : (Config.API_BASE_URL ?? '').replace(/\/$/, '');
 export const USE_MOCK = false; // 홈 카드 4상태를 mock 으로 보려면 true
 
 export class ApiError extends Error {
