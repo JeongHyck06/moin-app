@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Video from 'react-native-video';
@@ -22,9 +22,16 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
   const [index, setIndex] = useState(0);
   const list = useRef<FlatList<FeedMember>>(null);
   const touchY = useRef(0);
+  const activeIndex = useRef(0);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let alive = true;
+    setFeed(null);
+    setError(null);
+    setIndex(0);
+    activeIndex.current = 0;
     api<Feed>('GET', `/groups/${groupId}/check-ins?date=${date}`)
       .then(f => {
         if (!alive) {
@@ -34,14 +41,21 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         setIndex(0);
         list.current?.scrollToOffset({ offset: 0, animated: false });
       })
-      .catch(e => Alert.alert('불러오기 실패', (e as Error).message));
+      .catch(e => { if (alive) setError((e as Error).message); });
     return () => {
       alive = false;
     };
-  }, [groupId, date]);
+  }, [groupId, date, retry]);
 
   const members = feed?.members ?? [];
   const current = members[index];
+  const move = (direction: number) => {
+    const next = Math.max(0, Math.min(members.length - 1, activeIndex.current + direction));
+    if (next === activeIndex.current) return;
+    activeIndex.current = next;
+    setIndex(next);
+    list.current?.scrollToOffset({ offset: next * width, animated: false });
+  };
 
   return (
     <View
@@ -80,21 +94,39 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         data={members}
         horizontal
         pagingEnabled
+        extraData={index}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         showsHorizontalScrollIndicator={false}
         keyExtractor={m => String(m.userId)}
-        onMomentumScrollEnd={e => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
-        ListEmptyComponent={feed ? <Text style={[styles.placeholder, { width }]}>이 날은 영상이 없어요</Text> : undefined}
+        onMomentumScrollEnd={e => {
+          const next = Math.max(0, Math.min(members.length - 1, Math.round(e.nativeEvent.contentOffset.x / width)));
+          activeIndex.current = next;
+          setIndex(next);
+        }}
+        ListEmptyComponent={
+          <View style={[styles.empty, { width }]}>
+            {error ? (
+              <Pressable accessibilityRole="button" style={styles.retry} onPress={() => setRetry(n => n + 1)}>
+                <Text style={styles.meta}>{error} · 다시 시도</Text>
+              </Pressable>
+            ) : feed ? <Text style={styles.placeholder}>이 날은 영상이 없어요</Text> : <ActivityIndicator color="#FFFFFF" accessibilityLabel="선택한 날짜 인증 불러오는 중" />}
+          </View>
+        }
         renderItem={({ item, index: i }) => (
           <View style={[styles.page, { width }]}>
             {item.videoUrl ? (
-              <Video source={{ uri: videoUrl(item.videoUrl) }} style={StyleSheet.absoluteFill} resizeMode="cover" repeat paused={i !== index} />
+              <Video source={{ uri: videoUrl(item.videoUrl) }} style={StyleSheet.absoluteFill} resizeMode="cover" controls={false} repeat paused={i !== index} />
             ) : (
               <Text style={styles.placeholder}>아직 인증 전이에요</Text>
             )}
+            <View style={styles.tapZones}>
+              <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="이전 멤버 인증" disabled={i === 0} onPress={() => move(-1)} />
+              <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="다음 멤버 인증" disabled={i === members.length - 1} onPress={() => move(1)} />
+            </View>
           </View>
         )}
       />
-      <Text style={styles.hint}>좌우 스와이프 멤버 이동 · 상하 스와이프 날짜 이동</Text>
+      <Text style={styles.hint}>왼쪽 탭 이전 · 오른쪽 탭 다음 · 상하 스와이프 날짜 이동</Text>
     </View>
   );
 }
@@ -110,6 +142,10 @@ const styles = StyleSheet.create({
   meta: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
   icon: { width: 28, height: 28 },
   page: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  tapZones: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row' },
+  tapZone: { flex: 1 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  retry: { padding: 24 },
   placeholder: { fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', alignSelf: 'center' },
   hint: { fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', paddingTop: 12 },
 });
