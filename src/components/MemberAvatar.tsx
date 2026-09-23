@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Video from 'react-native-video';
-import { videoUrl } from '../api';
+import { avatarUrl as resolveAvatarUrl, videoUrl } from '../api';
 import { colors } from '../theme';
 
 type Props = {
@@ -21,7 +21,7 @@ export default function MemberAvatar({ done, name, progress, avatarUrl, videoUrl
   const fill = path ? (
     <Video source={{ uri: videoUrl(path) }} style={StyleSheet.absoluteFill} resizeMode="cover" paused muted />
   ) : avatarUrl ? (
-    <Image source={{ uri: avatarUrl }} style={StyleSheet.absoluteFill} />
+    <Image source={{ uri: resolveAvatarUrl(avatarUrl) }} style={StyleSheet.absoluteFill} />
   ) : null;
 
   return (
@@ -29,7 +29,7 @@ export default function MemberAvatar({ done, name, progress, avatarUrl, videoUrl
       {done ? (
         <View style={[circle, styles.ring, { borderWidth: size / 28 }]}>{fill}</View>
       ) : avatarUrl ? (
-        <Image source={{ uri: avatarUrl }} style={[circle, styles.dim]} />
+        <Image source={{ uri: resolveAvatarUrl(avatarUrl) }} style={[circle, styles.dim]} />
       ) : (
         <Image source={require('../assets/avatar-empty.png')} style={circle} />
       )}
