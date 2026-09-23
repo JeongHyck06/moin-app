@@ -1,5 +1,6 @@
 import UIKit
 import FirebaseCore
+import GoogleSignIn
 import KakaoSDKAuth
 import React
 import React_RCTAppDelegate
@@ -39,7 +40,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return true
   }
 
-  // 카카오톡 앱에서 돌아오는 인증 콜백, 그 외 URL 은 RN Linking 으로
+  // 공급자별 인증 콜백을 먼저 처리하고 그 외 URL 은 RN Linking 으로 전달
   func application(
     _ app: UIApplication,
     open url: URL,
@@ -47,6 +48,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     if AuthApi.isKakaoTalkLoginUrl(url) {
       return AuthController.handleOpenUrl(url: url)
+    }
+    if GIDSignIn.sharedInstance.handle(url) {
+      return true
     }
     return RCTLinkingManager.application(app, open: url, options: options)
   }
