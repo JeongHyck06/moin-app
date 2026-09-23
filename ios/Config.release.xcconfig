@@ -1,6 +1,4 @@
-// CocoaPods 설정 위에 .env 값을 얹는다
-// tmp.xcconfig 는 스킴 pre-action 이 ENVFILE 을 읽어 빌드마다 새로 만들고 gitignore 대상
-// ENVFILE 이 없으면 app/.env 를 읽는다, `ln -sfn .env.local .env` 를 해두면 Xcode 에서 직접 Run 해도 local 값이 들어간다
-// 링크도 없으면 값이 통째로 비어 카카오 SDK 가 MustInitAppKey 로 죽으니, 그때는 npm run ios (또는 ios:prod) 를 쓸 것
+// Archive 와 Release 는 .env 심볼릭 링크와 무관하게 운영 설정 사용
+ENVFILE = .env.prod
 #include "Pods/Target Support Files/Pods-Moin/Pods-Moin.release.xcconfig"
 #include? "tmp.xcconfig"
