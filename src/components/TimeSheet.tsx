@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState, type ElementRef } from 'react';
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, spacing } from '../theme';
 import Button from './Button';
@@ -22,26 +22,58 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5)); // 5분 단위
 const ITEM = 44;
 const PAD = 2; // 선택 줄 위아래로 보이는 항목 수, 휠 높이 = ITEM * (PAD * 2 + 1)
 
-// 앞뒤에 빈 칸을 PAD 개씩 넣어 첫/마지막 항목도 가운데 줄에 오게 함
-function Wheel({ items, index, onChange }: { items: string[]; index: number; onChange: (i: number) => void }) {
-  const data = [...Array(PAD).fill(''), ...items, ...Array(PAD).fill('')];
+// 스크롤 위치로 크기·회전·투명도를 연속 보간, JS 갱신과 무관하게 네이티브에서 휠 움직임 유지
+function Wheel({ items, index, label, onChange }: { items: string[]; index: number; label: string; onChange: (i: number) => void }) {
+  const scroll = useRef<ElementRef<typeof ScrollView>>(null);
+  const initialOffset = useRef({ x: 0, y: index * ITEM }).current;
+  const position = useRef(new Animated.Value(initialOffset.y)).current;
+  const selected = useRef(index);
+  const clamp = (i: number) => Math.max(0, Math.min(items.length - 1, i));
+  const select = (i: number) => scroll.current?.scrollTo({ y: clamp(i) * ITEM, animated: true });
   return (
-    <FlatList
-      data={data}
-      keyExtractor={(_, i) => String(i)}
+    <Animated.ScrollView
+      ref={scroll}
       style={styles.column}
+      contentContainerStyle={styles.wheelContent}
+      contentOffset={initialOffset}
       showsVerticalScrollIndicator={false}
+      bounces={false}
+      overScrollMode="never"
       snapToInterval={ITEM}
       decelerationRate="fast"
-      getItemLayout={(_, i) => ({ length: ITEM, offset: ITEM * i, index: i })}
-      initialScrollIndex={index}
-      onMomentumScrollEnd={e => onChange(Math.round(e.nativeEvent.contentOffset.y / ITEM))}
-      renderItem={({ item, index: i }) => (
-        <Text style={[styles.item, i - PAD === index ? styles.selected : Math.abs(i - PAD - index) > 1 && styles.far]}>
-          {item}
-        </Text>
-      )}
-    />
+      scrollEventThrottle={16}
+      accessibilityRole="adjustable"
+      accessibilityLabel={label}
+      accessibilityValue={{ min: 0, max: items.length - 1, now: index, text: items[index] }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={e => select(index + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
+      onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: position } } }], {
+        useNativeDriver: true,
+        listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          const next = clamp(Math.round(e.nativeEvent.contentOffset.y / ITEM));
+          if (next !== selected.current) {
+            selected.current = next;
+            onChange(next);
+          }
+        },
+      })}
+    >
+      {items.map((item, i) => {
+        const inputRange = [-2, -1, 0, 1, 2].map(distance => (i + distance) * ITEM);
+        return (
+          <Pressable key={item} onPress={() => select(i)} accessible={false}>
+            <Animated.Text style={[styles.item, {
+              opacity: position.interpolate({ inputRange, outputRange: [0.2, 0.55, 1, 0.55, 0.2], extrapolate: 'clamp' }),
+              transform: [
+                { perspective: 400 },
+                { rotateX: position.interpolate({ inputRange, outputRange: ['50deg', '25deg', '0deg', '-25deg', '-50deg'], extrapolate: 'clamp' }) },
+                { scale: position.interpolate({ inputRange, outputRange: [0.75, 0.9, 1, 0.9, 0.75], extrapolate: 'clamp' }) },
+              ],
+            }]}>{item}</Animated.Text>
+          </Pressable>
+        );
+      })}
+    </Animated.ScrollView>
   );
 }
 
@@ -71,9 +103,9 @@ export default function TimeSheet({ visible, title, subtitle, value, onDone, onC
         </View>
         <View style={styles.wheel}>
           <View style={styles.selection} />
-          <Wheel items={HOURS} index={h} onChange={setH} />
+          <Wheel items={HOURS} index={h} label="시" onChange={setH} />
           <Text style={styles.colon}>:</Text>
-          <Wheel items={MINUTES} index={mi} onChange={setMi} />
+          <Wheel items={MINUTES} index={mi} label="분" onChange={setMi} />
         </View>
         <Button label="완료" onPress={() => onDone(formatTime(h, mi * 5))} />
       </View>
@@ -106,8 +138,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.fillTertiary,
   },
   column: { width: 80, flexGrow: 0 },
-  item: { height: ITEM, lineHeight: ITEM, textAlign: 'center', fontSize: 20, color: colors.textSecondary },
-  selected: { fontSize: 24, fontWeight: '500', color: colors.textPrimary },
-  far: { color: colors.textTertiary, opacity: 0.6 },
+  wheelContent: { paddingVertical: ITEM * PAD },
+  item: { height: ITEM, lineHeight: ITEM, textAlign: 'center', fontSize: 24, fontWeight: '500', color: colors.textPrimary },
   colon: { width: 28, textAlign: 'center', fontSize: 24, fontWeight: '500', color: colors.textPrimary },
 });
