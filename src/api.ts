@@ -235,3 +235,6 @@ export function upload<T>(path: string, form: FormData): Promise<T> {
 
 // "/videos/x.mp4" 상대 경로를 재생 가능한 절대 URL 로, 토큰 불필요
 export const videoUrl = (path: string) => BASE_URL + path;
+
+// 소셜 제공자의 절대 URL과 직접 업로드한 서버 상대 경로를 함께 지원
+export const avatarUrl = (path: string) => path.startsWith('/') ? BASE_URL + path : path;
