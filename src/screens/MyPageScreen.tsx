@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { api, ApiError, clearToken, type MyGroup, type Profile } from '../api';
@@ -57,6 +57,9 @@ export default function MyPageScreen() {
         <View style={[card, styles.profile]}>
           <MemberAvatar done avatarUrl={profile?.avatarUrl} size={64} />
           <Text style={styles.nickname}>{profile?.nickname ?? ''}</Text>
+          <Pressable accessibilityRole="button" disabled={!profile} style={styles.editButton} onPress={() => profile && navigation.navigate('EditProfile', { profile })}>
+            <Text style={styles.editText}>프로필 편집</Text>
+          </Pressable>
           <StreakBadge
             days={profile?.totalStreak ?? 0}
             size="large"
@@ -95,5 +98,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md },
   profile: { alignItems: 'center', gap: 8, paddingVertical: spacing.lg },
   nickname: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
+  editButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md },
+  editText: { fontSize: 14, fontWeight: '600', color: colors.accent },
   section: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
 });

@@ -61,6 +61,8 @@
 	<string>3초 인증 영상을 찍기 위해 카메라를 사용해요</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>인증 영상에 소리를 담기 위해 마이크를 사용해요</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>프로필 사진을 선택하기 위해 사진 보관함을 사용해요</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

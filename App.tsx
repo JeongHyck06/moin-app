@@ -27,6 +27,7 @@ import CalendarScreen from './src/screens/CalendarScreen';
 import MyPageScreen from './src/screens/MyPageScreen';
 import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
 import EditGroupNameScreen from './src/screens/EditGroupNameScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
 import { colors } from './src/theme';
 
 const theme = {
@@ -118,6 +119,7 @@ function App() {
               <Stack.Screen name="Calendar" component={CalendarScreen} />
               <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
               <Stack.Screen name="EditGroupName" component={EditGroupNameScreen} />
+              <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             </>
           ) : (
             <Stack.Screen name="Login">{() => <LoginScreen onLogin={setUser} />}</Stack.Screen>
