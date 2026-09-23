@@ -91,7 +91,7 @@ export default function JoinGroupScreen({ navigation }: NativeStackScreenProps<R
         {(preview || error) && (
           <View style={styles.notice}>
             <Text style={styles.noticeText}>
-              {error ?? (preview?.alreadyMember ? '이미 참여한 그룹이에요' : '이번 기간은 인원에 포함되지 않고, 다음 기간부터 함께해요')}
+              {error ?? (preview?.alreadyMember ? '이미 참여한 그룹이에요' : '참여하면 바로 인증하고 함께 기록할 수 있어요')}
             </Text>
           </View>
         )}
