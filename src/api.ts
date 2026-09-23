@@ -186,6 +186,13 @@ export function setToken(t: string | null) {
   listeners.forEach(fn => fn(t));
 }
 
+// 로그아웃은 저장소 삭제를 마친 뒤 화면 전환, 재실행 시 이전 세션 복원 방지
+export async function clearToken() {
+  await AsyncStorage.removeItem(TOKEN_KEY);
+  token = null;
+  listeners.forEach(fn => fn(null));
+}
+
 // 앱 시작 시 한 번, 저장된 세션을 메모리로 올림
 export async function loadToken(): Promise<string | null> {
   token = await AsyncStorage.getItem(TOKEN_KEY).catch(() => null);
