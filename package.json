@@ -7,14 +7,18 @@
     "android:prod": "ENVFILE=.env.prod react-native run-android",
     "ios": "ENVFILE=.env.local react-native run-ios",
     "ios:prod": "ENVFILE=.env.prod react-native run-ios",
+    "ios:check-release": "ruby ios/validate-release-env.rb",
+    "ios:archive": "npm run ios:check-release && ENVFILE=.env.prod xcodebuild -workspace ios/Moin.xcworkspace -scheme Moin -configuration Release -destination 'generic/platform=iOS' -archivePath build/Moin.xcarchive archive",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "@invertase/react-native-apple-authentication": "^2.5.1",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-native-firebase/app": "^26.4.0",
     "@react-native-firebase/messaging": "^26.4.0",
+    "@react-native-google-signin/google-signin": "^16.1.5",
     "@react-native-seoul/kakao-login": "^6.0.4",
     "@react-native/new-app-screen": "0.87.1",
     "@react-navigation/bottom-tabs": "^7.19.1",

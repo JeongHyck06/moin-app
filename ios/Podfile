@@ -34,5 +34,13 @@ target 'Moin' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # 앱 Info.plist 와 네이티브 Config 모듈이 같은 운영 파일을 읽도록 고정
+    installer.pods_project.targets.each do |target|
+      next unless target.name.start_with?('react-native-config')
+      target.build_configurations.each do |config|
+        config.build_settings['ENVFILE'] = '.env.prod' if config.name == 'Release'
+      end
+    end
   end
 end

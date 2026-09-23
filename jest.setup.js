@@ -49,3 +49,32 @@ jest.mock('react-native-config', () => ({
   __esModule: true,
   default: { KAKAO_APP_KEY: '', API_BASE_URL: 'http://localhost:8080' },
 }));
+
+// OS 로그인 창은 테스트에서 열지 않고 SDK 경계만 대체
+jest.mock('@react-native-google-signin/google-signin', () => {
+  const GoogleSigninButton = () => null;
+  GoogleSigninButton.Size = { Wide: 1 };
+  GoogleSigninButton.Color = { Light: 0 };
+  return {
+    GoogleSigninButton,
+    GoogleSignin: { configure: jest.fn(), hasPlayServices: jest.fn(), signIn: jest.fn() },
+    isSuccessResponse: response => response.type === 'success',
+    isErrorWithCode: error => typeof error?.code === 'string',
+    statusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
+  };
+});
+jest.mock('@invertase/react-native-apple-authentication', () => {
+  const AppleButton = () => null;
+  AppleButton.Style = { WHITE: 0 };
+  AppleButton.Type = { SIGN_IN: 0 };
+  return {
+    AppleButton,
+    appleAuth: {
+      isSupported: true,
+      Operation: { LOGIN: 1 },
+      Scope: { FULL_NAME: 0, EMAIL: 1 },
+      Error: { CANCELED: '1001' },
+      performRequest: jest.fn(),
+    },
+  };
+});
