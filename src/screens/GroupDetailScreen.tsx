@@ -20,7 +20,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
   const insets = useSafeAreaInsets();
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [certification, setCertification] = useState<{ name: string; path: string } | null>(null);
+  const [certification, setCertification] = useState<number | null>(null);
 
   // 인증하고 돌아오면 스트릭·진행도가 바뀌므로 포커스마다 다시 조회
   useFocusEffect(
@@ -71,7 +71,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
               style={({ pressed }) => pressed && styles.memberPressed}
               onPress={() => {
                 // 주간 목표를 못 채운 멤버도 인증이 한 건이라도 있으면 재생
-                if (m.videoUrl) setCertification({ name: m.nickname, path: m.videoUrl });
+                if (m.videoUrl) setCertification(m.userId);
                 else Alert.alert('아직 인증 전이에요', `${m.nickname}님은 ${period} 올린 인증이 없어요`);
               }}
             >
@@ -97,7 +97,14 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
           onPress={() => navigation.navigate('Camera', { groupId: g.id, name: g.name })}
         />
       </View>
-      {certification && <CheckInViewer name={certification.name} path={certification.path} period={period} onClose={() => setCertification(null)} />}
+      {certification !== null && (
+        <CheckInViewer
+          items={g.members.flatMap(m => m.videoUrl ? [{ userId: m.userId, name: m.nickname, path: m.videoUrl }] : [])}
+          initialUserId={certification}
+          period={period}
+          onClose={() => setCertification(null)}
+        />
+      )}
       <Modal visible={optionsOpen} transparent animationType="fade" onRequestClose={() => setOptionsOpen(false)}>
         <View style={styles.optionsOverlay}>
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="그룹 옵션 닫기" onPress={() => setOptionsOpen(false)} />
