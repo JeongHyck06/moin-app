@@ -10,6 +10,7 @@ import ListRow from '../components/ListRow';
 import MemberAvatar from '../components/MemberAvatar';
 import ProgressBar from '../components/ProgressBar';
 import StreakBadge from '../components/StreakBadge';
+import GroupCalendar from '../components/GroupCalendar';
 import { card, colors, radius, spacing } from '../theme';
 
 // Figma Group Detail (46:338)
@@ -38,6 +39,11 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 34) }]}>
       <View style={styles.header}>
         <Text style={styles.heading} numberOfLines={1}>{g.name}</Text>
+        {detail.isOwner && (
+          <Pressable accessibilityRole="button" accessibilityLabel="그룹 이름 변경" style={styles.renameButton} onPress={() => navigation.navigate('EditGroupName', { id: g.id, name: g.name })}>
+            <Text style={styles.renameText}>이름 변경</Text>
+          </Pressable>
+        )}
         <Pressable accessibilityRole="button" accessibilityLabel="그룹 옵션" onPress={() => setOptionsOpen(true)} style={styles.optionsButton}>
           <Text style={styles.optionsIcon}>•••</Text>
         </Pressable>
@@ -67,21 +73,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
             />
           ))}
         </View>
-        <View style={card}>
-          <ListRow
-            title="피드"
-            detail={`${period} 영상 ${detail.periodVideoCount}개`}
-            chevron
-            separator
-            onPress={() => navigation.navigate('Feed', { groupId: g.id })}
-          />
-          <ListRow
-            title="기록"
-            detail={`이번 달 ${detail.monthCompletedPeriods}/${detail.monthClosedPeriods}`}
-            chevron
-            onPress={() => navigation.navigate('Calendar', { groupId: g.id })}
-          />
-        </View>
+        <GroupCalendar key={g.id} groupId={g.id} onDatePress={date => navigation.navigate('Feed', { groupId: g.id, date })} />
       </ScrollView>
       <View style={styles.cta}>
         <Button
@@ -97,19 +89,8 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
             <ListRow
               title="초대코드 공유"
               detail={detail.inviteCode}
-              separator={detail.isOwner}
               onPress={() => Share.share({ message: `모인 "${g.name}" 초대코드: ${detail.inviteCode}` }).catch(() => Alert.alert('공유 실패', '잠시 후 다시 시도해 주세요'))}
             />
-            {detail.isOwner && (
-              <ListRow
-                title="그룹 이름 변경"
-                chevron
-                onPress={() => {
-                  setOptionsOpen(false);
-                  navigation.navigate('EditGroupName', { id: g.id, name: g.name });
-                }}
-              />
-            )}
           </View>
         </View>
       </Modal>
@@ -121,6 +102,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.canvas },
   header: { flexDirection: 'row', alignItems: 'center', paddingLeft: spacing.md, paddingRight: 8, minHeight: 48 },
   heading: { flex: 1, fontSize: 17, lineHeight: 22, fontWeight: '700', color: colors.textSecondary },
+  renameButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
+  renameText: { fontSize: 13, fontWeight: '600', color: colors.accent },
   optionsButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   optionsIcon: { fontSize: 19, letterSpacing: 2, color: colors.textPrimary },
   optionsOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'flex-end' },
