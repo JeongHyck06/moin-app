@@ -17,7 +17,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const today = toISODate(new Date());
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(route.params.date ?? today);
   const [feed, setFeed] = useState<Feed | null>(null);
   const [index, setIndex] = useState(0);
   const list = useRef<FlatList<FeedMember>>(null);
