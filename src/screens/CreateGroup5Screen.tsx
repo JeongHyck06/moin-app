@@ -19,8 +19,8 @@ export default function CreateGroup5Screen({ navigation, route }: NativeStackScr
       step={5}
       title="멤버를 초대하세요"
       subtitle="초대코드를 공유하면 바로 참여할 수 있어요"
-      hint="멤버가 참여하면 다음 기간부터 함께 집계돼요"
-      note="초대코드는 그룹 상세에서 언제든 다시 볼 수 있어요"
+      hint="멤버가 참여하면 바로 함께 기록할 수 있어요"
+      note="초대코드는 그룹 오른쪽 위 옵션에서 다시 볼 수 있어요"
       cta={{ label: '초대코드 공유하기', onPress: share }}
       secondary={{ label: '나중에 초대하기', onPress: () => navigation.popToTop() }}
     >
