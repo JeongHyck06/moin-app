@@ -2,7 +2,9 @@ import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { api, type MyGroup, type Profile } from '../api';
+import { api, ApiError, clearToken, type MyGroup, type Profile } from '../api';
+import { clearSocialLogin } from '../socialLogin';
+import { currentPushToken, forgetPushToken } from '../push';
 import Header from '../components/Header';
 import ListRow from '../components/ListRow';
 import MemberAvatar from '../components/MemberAvatar';
@@ -16,6 +18,26 @@ export default function MyPageScreen() {
   const navigation = useNavigation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [groups, setGroups] = useState<MyGroup[]>([]);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const logout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      try {
+        await api<void>('POST', '/me/logout', { pushToken: currentPushToken() });
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 401) throw error;
+      }
+      await clearSocialLogin();
+      forgetPushToken();
+      await clearToken();
+    } catch (error) {
+      Alert.alert('로그아웃 실패', (error as Error).message);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -59,6 +81,9 @@ export default function MyPageScreen() {
         </View>
         <View style={card}>
           <ListRow title="알림 설정" chevron onPress={() => navigation.navigate('NotificationSettings')} />
+        </View>
+        <View style={card}>
+          <ListRow title={loggingOut ? '로그아웃 중…' : '로그아웃'} onPress={loggingOut ? undefined : logout} />
         </View>
       </ScrollView>
     </View>

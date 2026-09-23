@@ -82,10 +82,12 @@ function App() {
     }
     // 로그인 뒤에야 Authorization 헤더가 붙어 토큰을 등록할 수 있음
     let off = () => {};
+    let cancelled = false;
     registerPushToken().then(unsubscribe => {
-      off = unsubscribe;
+      if (cancelled) unsubscribe();
+      else off = unsubscribe;
     });
-    return () => off();
+    return () => { cancelled = true; off(); };
   }, [user]);
 
   if (!ready) {

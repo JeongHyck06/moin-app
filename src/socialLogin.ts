@@ -1,12 +1,21 @@
 import { Platform } from 'react-native';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
+import { logout as kakaoLogout } from '@react-native-seoul/kakao-login';
 import { api, type LoginResponse } from './api';
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from './config';
 
 export const googleLoginReady = GOOGLE_WEB_CLIENT_ID.length > 0
   && (Platform.OS !== 'ios' || GOOGLE_IOS_CLIENT_ID.length > 0);
 export const appleLoginSupported = Platform.OS === 'ios' && appleAuth.isSupported;
+
+// 연결 해제 없이 SDK 로그인 캐시만 정리, 다음 로그인에서 계정 선택 가능
+export async function clearSocialLogin() {
+  await Promise.allSettled([
+    Promise.resolve().then(() => GoogleSignin.signOut()),
+    Promise.resolve().then(() => kakaoLogout()),
+  ]);
+}
 
 if (googleLoginReady) {
   GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID, iosClientId: GOOGLE_IOS_CLIENT_ID || undefined });
@@ -41,7 +50,12 @@ export async function loginWithApple(): Promise<LoginResponse | null> {
     const fullName = [result.fullName?.familyName, result.fullName?.givenName].filter(Boolean).join(' ').slice(0, 100);
     return await api<LoginResponse>('POST', '/auth/apple', { identityToken: result.identityToken, nonce, fullName: fullName || undefined });
   } catch (error) {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === appleAuth.Error.CANCELED) return null;
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      if (error.code === appleAuth.Error.CANCELED) return null;
+      if (error.code === appleAuth.Error.UNKNOWN) {
+        throw new Error('Apple 로그인을 완료하지 못했어요. 기기 설정에서 Apple 계정 로그인을 확인한 뒤 다시 시도해 주세요.');
+      }
+    }
     throw error;
   }
 }

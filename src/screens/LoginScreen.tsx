@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login as kakaoLogin } from '@react-native-seoul/kakao-login';
 import { api, setToken, type LoginResponse } from '../api';
 import { DEV_LOGIN_ENABLED, KAKAO_APP_KEY } from '../config';
-import { appleLoginSupported, googleLoginReady, loginWithApple, loginWithGoogle } from '../socialLogin';
+import { appleLoginSupported, loginWithApple, loginWithGoogle } from '../socialLogin';
 import Button from '../components/Button';
 import StatusIcon from '../components/StatusIcon';
 import { colors, radius, spacing } from '../theme';
@@ -86,13 +86,15 @@ export default function LoginScreen({ onLogin }: { onLogin: (user: LoginResponse
         onPress={login}
         disabled={busy || (!kakaoReady && !DEV_LOGIN_ENABLED)}
       />
-      <GoogleSigninButton
-        size={GoogleSigninButton.Size.Wide}
-        color={GoogleSigninButton.Color.Light}
-        style={styles.providerButton}
-        disabled={busy || !googleLoginReady}
-        onPress={() => socialLogin('google')}
-      />
+      <View style={styles.googleButton}>
+        <GoogleSigninButton
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Light}
+          style={styles.providerButton}
+          disabled={busy}
+          onPress={() => socialLogin('google')}
+        />
+      </View>
       {appleLoginSupported && (
         <AppleButton
           buttonStyle={AppleButton.Style.WHITE}
@@ -131,5 +133,7 @@ const styles = StyleSheet.create({
   headline: { fontSize: 28, fontWeight: '900', color: colors.textPrimary, textAlign: 'center' },
   sub: { fontSize: 15, color: colors.textSecondary, textAlign: 'center' },
   actions: { marginHorizontal: spacing.lg, gap: 10, paddingTop: 12 },
+  // 네이티브 Google 버튼의 비활성 배경이 반투명 검정이라 흰색 바탕 유지
+  googleButton: { backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden' },
   providerButton: { width: '100%', height: 48 },
 });
