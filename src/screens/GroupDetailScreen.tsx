@@ -11,6 +11,7 @@ import MemberAvatar from '../components/MemberAvatar';
 import ProgressBar from '../components/ProgressBar';
 import StreakBadge from '../components/StreakBadge';
 import GroupCalendar from '../components/GroupCalendar';
+import CheckInViewer from '../components/CheckInViewer';
 import { card, colors, radius, spacing } from '../theme';
 
 // Figma Group Detail (46:338)
@@ -19,6 +20,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
   const insets = useSafeAreaInsets();
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [certification, setCertification] = useState<{ name: string; path: string } | null>(null);
 
   // 인증하고 돌아오면 스트릭·진행도가 바뀌므로 포커스마다 다시 조회
   useFocusEffect(
@@ -62,15 +64,28 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
         />
         <View style={[card, styles.members]}>
           {g.members.map(m => (
-            <MemberAvatar
+            <Pressable
               key={m.userId}
-              name={m.nickname}
-              done={m.done}
-              avatarUrl={m.avatarUrl}
-              videoUrl={m.videoUrl}
-              size={56}
-              progress={g.frequency === 'WEEKLY' ? `${m.doneCount}/${g.weeklyTarget}` : undefined}
-            />
+              accessibilityRole="button"
+              accessibilityLabel={`${m.nickname}님의 인증 보기`}
+              style={({ pressed }) => pressed && styles.memberPressed}
+              onPress={() => {
+                // 주간 목표를 못 채운 멤버도 인증이 한 건이라도 있으면 재생
+                if (m.videoUrl) setCertification({ name: m.nickname, path: m.videoUrl });
+                else Alert.alert('아직 인증 전이에요', `${m.nickname}님은 ${period} 올린 인증이 없어요`);
+              }}
+            >
+              <View pointerEvents="none">
+                <MemberAvatar
+                  name={m.nickname}
+                  done={m.done}
+                  avatarUrl={m.avatarUrl}
+                  videoUrl={m.videoUrl}
+                  size={56}
+                  progress={g.frequency === 'WEEKLY' ? `${m.doneCount}/${g.weeklyTarget}` : undefined}
+                />
+              </View>
+            </Pressable>
           ))}
         </View>
         <GroupCalendar key={g.id} groupId={g.id} onDatePress={date => navigation.navigate('Feed', { groupId: g.id, date })} />
@@ -82,6 +97,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
           onPress={() => navigation.navigate('Camera', { groupId: g.id, name: g.name })}
         />
       </View>
+      {certification && <CheckInViewer name={certification.name} path={certification.path} period={period} onClose={() => setCertification(null)} />}
       <Modal visible={optionsOpen} transparent animationType="fade" onRequestClose={() => setOptionsOpen(false)}>
         <View style={styles.optionsOverlay}>
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="그룹 옵션 닫기" onPress={() => setOptionsOpen(false)} />
@@ -119,5 +135,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
+  memberPressed: { opacity: 0.6 },
   cta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
 });
