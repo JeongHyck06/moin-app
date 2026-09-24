@@ -29,6 +29,7 @@ import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen
 import EditGroupNameScreen from './src/screens/EditGroupNameScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import { colors } from './src/theme';
+import { SeenCheckInsProvider } from './src/SeenCheckInsProvider';
 
 const theme = {
   ...DarkTheme,
@@ -98,6 +99,7 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      <SeenCheckInsProvider userId={user?.userId ?? null}>
       <NavigationContainer theme={theme} ref={nav}>
         <StatusBar barStyle="light-content" />
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -127,6 +129,7 @@ function App() {
         </Stack.Navigator>
         <UpdateGate />
       </NavigationContainer>
+      </SeenCheckInsProvider>
     </SafeAreaProvider>
   );
 }
