@@ -21,6 +21,7 @@ export type MemberStatus = {
   avatarUrl: string | null;
   done: boolean;
   doneCount: number;
+  checkInId: number | null;
   videoUrl: string | null;
 };
 
@@ -101,6 +102,9 @@ export type FeedMember = {
 };
 
 export type Feed = { date: string; completedCount: number; activeCount: number; members: FeedMember[] };
+
+export type CheckInComment = { id: number; userId: number; nickname: string; avatarUrl: string | null; body: string; createdAt: string };
+export type CommentPage = { items: CheckInComment[]; nextCursor: number | null };
 
 export type Period = { start: string; end: string; status: PeriodStatus }; // end 는 배타
 

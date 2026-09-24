@@ -6,6 +6,7 @@ const member = (userId: number, nickname: string, done: boolean): MemberStatus =
   avatarUrl: null,
   done,
   doneCount: done ? 1 : 0,
+  checkInId: done ? userId : null,
   videoUrl: done ? '/videos/mock.mp4' : null,
 });
 
