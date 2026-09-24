@@ -1,6 +1,6 @@
 module.exports = {
   preset: '@react-native/jest-preset',
-  setupFiles: ['./jest.setup.js'],
+  setupFiles: ['react-native-gesture-handler/jestSetup.js', './jest.setup.js'],
   // react-navigation 은 ESM 배포라 변환 대상에 포함
   transformIgnorePatterns: [
     'node_modules/(?!(jest-)?react-native|@react-native(-community)?|@react-native-async-storage|@react-navigation|react-native-screens|react-native-safe-area-context)',

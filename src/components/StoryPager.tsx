@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Animated, FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Video, { ViewType } from 'react-native-video';
 import { videoUrl } from '../api';
 import { colors } from '../theme';
 import { useSeenCheckIns } from '../SeenCheckInsProvider';
 import SwipeUpArea from './SwipeUpArea';
+import { useReducedMotion } from '../useReducedMotion';
 
 export type StoryItem = { userId: number; checkInId: number | null; path: string | null };
 type Props = { items: StoryItem[]; index: number; onIndexChange: (index: number) => void; paused: boolean; commentsOpen: boolean; onComments: () => void };
@@ -48,6 +49,8 @@ function StoryVideo({ item, active, paused }: { item: StoryItem; active: boolean
 export default function StoryPager({ items, index, onIndexChange, paused, commentsOpen, onComments }: Props) {
   const { width } = useWindowDimensions();
   const list = useRef<FlatList<StoryItem>>(null);
+  const reduced = useReducedMotion();
+  const scrollX = useRef(new Animated.Value(index * width)).current;
   const initialIndex = useRef(index).current;
   const moving = useRef(false);
   const [dragging, setDragging] = useState(false);
@@ -56,10 +59,11 @@ export default function StoryPager({ items, index, onIndexChange, paused, commen
     if (previousWidth.current !== width) {
       previousWidth.current = width;
       list.current?.scrollToOffset({ offset: index * width, animated: false });
+      scrollX.setValue(index * width);
       moving.current = false;
       setDragging(false);
     }
-  }, [index, width]);
+  }, [index, scrollX, width]);
   const settle = (offset: number) => {
     const next = Math.max(0, Math.min(items.length - 1, Math.round(offset / width)));
     moving.current = false;
@@ -72,11 +76,12 @@ export default function StoryPager({ items, index, onIndexChange, paused, commen
     if (next === index) return;
     moving.current = true;
     setDragging(true);
-    list.current?.scrollToOffset({ offset: next * width, animated: true });
+    list.current?.scrollToOffset({ offset: next * width, animated: !reduced });
+    if (reduced) settle(next * width);
   };
   return (
     <SwipeUpArea enabled={!commentsOpen && !dragging && items[index]?.checkInId != null} onSwipeUp={onComments}>
-      <FlatList
+      <Animated.FlatList
         ref={list}
         data={items}
         extraData={`${index}-${paused}-${commentsOpen}-${dragging}`}
@@ -90,6 +95,8 @@ export default function StoryPager({ items, index, onIndexChange, paused, commen
         initialNumToRender={1}
         maxToRenderPerBatch={3}
         windowSize={3}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
         getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         keyExtractor={item => `${item.userId}-${item.checkInId ?? 'empty'}`}
         onScrollBeginDrag={() => { moving.current = true; setDragging(true); }}
@@ -98,15 +105,22 @@ export default function StoryPager({ items, index, onIndexChange, paused, commen
           if (Math.abs(offset / width - Math.round(offset / width)) < 0.001) settle(offset);
         }}
         onMomentumScrollEnd={e => settle(e.nativeEvent.contentOffset.x)}
-        renderItem={({ item, index: i }) => (
-          <View style={[styles.page, { width }]}>
-            <View style={styles.tapZones}>
-              <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="이전 인증" disabled={i === 0 || commentsOpen} onPress={() => move(-1)} />
-              <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="다음 인증" disabled={i === items.length - 1 || commentsOpen} onPress={() => move(1)} />
-            </View>
-            <StoryVideo item={item} active={i === index && !dragging} paused={paused || commentsOpen} />
-          </View>
-        )}
+        renderItem={({ item, index: i }) => {
+          const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
+          const motion = reduced ? undefined : {
+            opacity: scrollX.interpolate({ inputRange, outputRange: [0.55, 1, 0.55], extrapolate: 'clamp' }),
+            transform: [{ scale: scrollX.interpolate({ inputRange, outputRange: [0.96, 1, 0.96], extrapolate: 'clamp' }) }],
+          };
+          return (
+            <Animated.View style={[styles.page, { width }, motion]}>
+              <View style={styles.tapZones}>
+                <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="이전 인증" disabled={i === 0 || commentsOpen} onPress={() => move(-1)} />
+                <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="다음 인증" disabled={i === items.length - 1 || commentsOpen} onPress={() => move(1)} />
+              </View>
+              <StoryVideo item={item} active={i === index && !dragging} paused={paused || commentsOpen} />
+            </Animated.View>
+          );
+        }}
       />
     </SwipeUpArea>
   );
