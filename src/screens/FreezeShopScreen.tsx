@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,9 @@ import { card, colors, spacing } from '../theme';
 // 미완료 거래는 서버 지급 확인 뒤에만 소모, 앱 종료·재시도에도 같은 거래 중복 지급 방지
 function PurchaseItem({ wallet, onUpdated }: { wallet: FreezeWallet; onUpdated: (wallet: FreezeWallet) => void }) {
   const [busy, setBusy] = useState(false);
+  const catalog = wallet.products ?? [{ productId: wallet.productId, quantity: 1 }];
+  const skuKey = catalog.map(p => p.productId).join(",");
+  const skus = useMemo(() => skuKey.split(","), [skuKey]);
   const processing = useRef(new Set<string>());
   const [message, setMessage] = useState('');
   const completeRef = useRef<(p: Purchase) => Promise<void>>(async () => {});
@@ -25,7 +28,7 @@ function PurchaseItem({ wallet, onUpdated }: { wallet: FreezeWallet; onUpdated: 
     },
   });
   const complete = useCallback(async (purchase: Purchase) => {
-    if (purchase.productId !== wallet.productId || !purchase.purchaseToken || processing.current.has(purchase.id)) return;
+    if (!skus.includes(purchase.productId) || !purchase.purchaseToken || processing.current.has(purchase.id)) return;
     processing.current.add(purchase.id);
     try {
       const updated = await api<FreezeWallet>('POST', '/me/freezes/purchases', { platform: Platform.OS, token: purchase.purchaseToken });
@@ -34,7 +37,7 @@ function PurchaseItem({ wallet, onUpdated }: { wallet: FreezeWallet; onUpdated: 
       setMessage('프리즈가 보관함에 지급됐어요');
     } catch (e) { setMessage((e as Error).message + '\n추가 결제 없이 구매 확인을 다시 시도할 수 있어요'); }
     finally { processing.current.delete(purchase.id); setBusy(false); }
-  }, [finishTransaction, onUpdated, wallet.productId]);
+  }, [finishTransaction, onUpdated, skus]);
   completeRef.current = complete;
   const recover = useCallback(async () => {
     try { for (const p of await getAvailablePurchases()) await completeRef.current(p); }
@@ -42,24 +45,27 @@ function PurchaseItem({ wallet, onUpdated }: { wallet: FreezeWallet; onUpdated: 
   }, []);
   useEffect(() => {
     if (!connected) return;
-    fetchProducts({ skus: [wallet.productId], type: 'in-app' }).catch(() => setMessage('스토어 상품을 불러오지 못했어요'));
+    fetchProducts({ skus, type: 'in-app' }).catch(() => setMessage('스토어 상품을 불러오지 못했어요'));
     recover();
-  }, [connected, fetchProducts, recover, wallet.productId]);
-  const product = products.find(p => p.id === wallet.productId);
-  const buy = async () => {
+  }, [connected, fetchProducts, recover, skus]);
+  const buy = async (productId: string) => {
+    const product = products.find(p => p.id === productId);
     if (busy || !product) return;
     setBusy(true); setMessage('');
     try {
       await requestPurchase({ type: 'in-app', request: {
-        apple: { sku: wallet.productId, appAccountToken: wallet.accountToken, quantity: 1 },
-        google: { skus: [wallet.productId], obfuscatedAccountId: wallet.accountToken },
+        apple: { sku: productId, appAccountToken: wallet.accountToken, quantity: 1 },
+        google: { skus: [productId], obfuscatedAccountId: wallet.accountToken },
       } });
     } catch { setBusy(false); setMessage('구매 요청을 완료하지 못했어요'); }
   };
   return <View style={styles.section}>
-    <Text style={styles.title}>프리즈 1개</Text>
+    <Text style={styles.title}>프리즈 구매</Text>
     <Text style={styles.body}>구매한 프리즈는 만료 없이 보관해요</Text>
-    <Button label={busy ? '구매 확인 중…' : product ? `${product.displayPrice}에 구매` : '스토어 상품 준비 중'} disabled={!product || busy} onPress={buy} />
+    {catalog.map(item => {
+      const product = products.find(p => p.id === item.productId);
+      return <Button key={item.productId} label={busy ? '구매 확인 중…' : product ? `${item.quantity}개 · ${product.displayPrice}에 구매` : `${item.quantity}개 · 스토어 상품 준비 중`} disabled={!connected || !product || busy} onPress={() => buy(item.productId)} />;
+    })}
     {message !== '' && <Text accessibilityLiveRegion="polite" style={styles.body}>{message}</Text>}
     <Pressable accessibilityRole="button" disabled={!connected || busy} style={styles.action} onPress={recover}><Text style={styles.link}>미지급 구매 확인</Text></Pressable>
   </View>;
@@ -105,7 +111,7 @@ export default function FreezeShopScreen() {
       <Text style={styles.body}>프리즈를 켠 모임의 캘린더에서 날짜를 골라 내 인증 1회를 채워요. 모임별 월 무료 1개를 먼저 사용해요.</Text>
       {error !== '' && <Pressable accessibilityRole="button" onPress={refresh}><Text style={styles.body}>{error} · 다시 시도</Text></Pressable>}
       {!wallet ? <ActivityIndicator color={colors.accent} /> : <>
-        {(Platform.OS === 'ios' ? wallet.appleReady : wallet.googleReady) ? <PurchaseItem wallet={wallet} onUpdated={setWallet} /> : <View style={[card, styles.section]}><Text style={styles.title}>프리즈 1개 · 1,000원</Text><Text style={styles.body}>스토어 구매를 준비 중이에요</Text></View>}
+        {(Platform.OS === 'ios' ? wallet.appleReady : wallet.googleReady) ? <PurchaseItem wallet={wallet} onUpdated={setWallet} /> : <View style={[card, styles.section]}><Text style={styles.title}>프리즈 구매</Text><Text style={styles.body}>1개 · 1,000원 / 10개 · 10,000원</Text><Text style={styles.body}>스토어 구매를 준비 중이에요</Text></View>}
         <View style={[card, styles.section]}>
           <Text style={styles.title}>광고 보고 1개 받기</Text>
           <Text style={styles.body}>계정당 주 1회 · 매주 월요일 초기화</Text>
