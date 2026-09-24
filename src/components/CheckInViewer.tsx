@@ -4,18 +4,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Video from 'react-native-video';
 import { videoUrl } from '../api';
 import { colors, spacing } from '../theme';
+import CheckInComments from './CheckInComments';
+import SwipeUpArea from './SwipeUpArea';
 
-type Certification = { userId: number; name: string; path: string };
-type Props = { items: Certification[]; initialUserId: number; period: string; onClose: () => void };
+type Certification = { userId: number; name: string; path: string; checkInId: number | null };
+type Props = { groupId: number; items: Certification[]; initialUserId: number; period: string; onClose: () => void };
 
 // 현재 기간의 최신 인증을 직접 재생, 닫을 때 플레이어도 함께 해제
-export default function CheckInViewer({ items, initialUserId, period, onClose }: Props) {
+export default function CheckInViewer({ groupId, items, initialUserId, period, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [index, setIndex] = useState(() => Math.max(0, items.findIndex(item => item.userId === initialUserId)));
   const [paused, setPaused] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const current = items[index];
   const move = (direction: number) => {
     const next = Math.max(0, Math.min(items.length - 1, index + direction));
@@ -28,7 +31,7 @@ export default function CheckInViewer({ items, initialUserId, period, onClose }:
   if (!current) return null;
 
   return (
-    <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={() => commentsOpen ? setCommentsOpen(false) : onClose()}>
       <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) }]}>
         <View style={styles.segments}>
           {items.map((item, i) => <View key={item.userId} style={[styles.segment, i <= index && styles.segmentActive]} />)}
@@ -42,7 +45,7 @@ export default function CheckInViewer({ items, initialUserId, period, onClose }:
             <Text style={styles.closeText}>닫기</Text>
           </Pressable>
         </View>
-        <View style={styles.player}>
+        <SwipeUpArea enabled={current.checkInId != null && !commentsOpen} onSwipeUp={() => setCommentsOpen(true)}>
           {!failed && (
             <Video
               key={`${current.userId}-${attempt}`}
@@ -51,7 +54,7 @@ export default function CheckInViewer({ items, initialUserId, period, onClose }:
               resizeMode="contain"
               controls={false}
               repeat
-              paused={paused}
+              paused={paused || commentsOpen}
               playInBackground={false}
               playWhenInactive={false}
               onLoad={() => setLoading(false)}
@@ -72,13 +75,15 @@ export default function CheckInViewer({ items, initialUserId, period, onClose }:
             </View>
           )}
           {loading && !failed && <ActivityIndicator style={StyleSheet.absoluteFill} pointerEvents="none" color={colors.accent} accessibilityLabel="인증 영상 불러오는 중" />}
-        </View>
+        </SwipeUpArea>
         <View style={styles.footer}>
           <Text style={styles.subtitle}>왼쪽 탭 이전 · 오른쪽 탭 다음</Text>
+          {current.checkInId != null && <Pressable accessibilityRole="button" accessibilityLabel="댓글 열기" style={styles.close} onPress={() => setCommentsOpen(true)}><Text style={styles.closeText}>위로 스와이프해 댓글 남기기 ↑</Text></Pressable>}
           <Pressable accessibilityRole="button" style={styles.close} disabled={failed} onPress={() => setPaused(value => !value)}>
             <Text style={styles.closeText}>{paused ? '재생' : '일시정지'}</Text>
           </Pressable>
         </View>
+        {commentsOpen && current.checkInId != null && <CheckInComments key={current.checkInId} groupId={groupId} checkInId={current.checkInId} name={current.name} onClose={() => setCommentsOpen(false)} />}
       </View>
     </Modal>
   );
@@ -92,7 +97,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: colors.textSecondary },
   close: { minWidth: 48, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   closeText: { fontSize: 15, fontWeight: '600', color: colors.accent },
-  player: { flex: 1, justifyContent: 'center' },
   tapZones: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row' },
   tapZone: { flex: 1 },
   segments: { flexDirection: 'row', gap: 4, paddingHorizontal: spacing.lg, paddingTop: 8 },
