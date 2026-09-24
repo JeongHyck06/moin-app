@@ -230,7 +230,7 @@ async function request<T>(method: string, path: string, headers: Record<string, 
   return res.status === 204 ? (undefined as T) : res.json();
 }
 
-export function api<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown): Promise<T> {
+export function api<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   return request<T>(method, path, { 'Content-Type': 'application/json' }, body === undefined ? undefined : JSON.stringify(body));
 }
 
@@ -247,4 +247,4 @@ export const avatarUrl = (path: string) => path.startsWith('/') ? BASE_URL + pat
 
 // 보유 수량은 서버 원장 기준, 월 무료분은 모임별이며 구매·광고분은 계정 공용
 export type FreezeInventory = { enabled: boolean; monthlyRemaining: number; balance: number; available: number; today: string; earliestDate: string; checkedDates: string[]; frozenDates: string[] };
-export type FreezeWallet = { balance: number; adAvailable: boolean; nextAdDate: string; productId: string; accountToken: string; appleReady: boolean; googleReady: boolean; androidAdUnit: string; iosAdUnit: string };
+export type FreezeWallet = { balance: number; adAvailable: boolean; nextAdDate: string; productId: string; products: { productId: string; quantity: number }[]; accountToken: string; appleReady: boolean; googleReady: boolean; androidAdUnit: string; iosAdUnit: string };
