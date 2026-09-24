@@ -1,9 +1,11 @@
+import { requestTrackingConsent } from './trackingConsent';
 import mobileAds, { AdEventType, AdsConsent, MaxAdContentRating, RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 
 // 사용자 동의 이후에만 SDK 초기화, 지급은 서버 SSV 콜백에서 처리
 export async function watchFreezeAd(unitId: string, session: string): Promise<boolean> {
   const consent = await AdsConsent.gatherConsent();
   if (!consent.canRequestAds) throw new Error('광고 동의 설정을 확인해주세요');
+  await requestTrackingConsent();
   await mobileAds().setRequestConfiguration({ maxAdContentRating: MaxAdContentRating.G });
   await mobileAds().initialize();
   return new Promise((resolve, reject) => {

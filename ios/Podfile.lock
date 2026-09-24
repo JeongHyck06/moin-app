@@ -2106,6 +2106,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNPermissions (5.6.2):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-bridging
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNScreens (4.28.0):
     - hermes-engine
     - RCTRequired
@@ -2328,6 +2350,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNGoogleMobileAds (from `../node_modules/react-native-google-mobile-ads`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
+  - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - SocketRocket (from `build/rndeps-facades/SocketRocket`)
@@ -2559,6 +2582,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-google-mobile-ads"
   RNGoogleSignin:
     :path: "../node_modules/@react-native-google-signin/google-signin"
+  RNPermissions:
+    :path: "../node_modules/react-native-permissions"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -2693,12 +2718,13 @@ SPEC CHECKSUMS:
   RNGestureHandler: b4c1c351c1d33151b813dcc02f249d425a1ee739
   RNGoogleMobileAds: be5c3653d324cf6f0c699e945e98028fb737be92
   RNGoogleSignin: 4f364ff45a50422c0b267176799471f58a54e2a8
+  RNPermissions: 0c1b82b5fb65821ebaff3e3cd707cf9868dfa80f
   RNScreens: 3c977859fd13e67dc4ebfc24afb4d7c2e894db61
   RNSVG: 4da2e0a724c48a841e0dbfbdc7db39286c050b61
   SocketRocket: 37aec555668fb852ec12e3c0de59a86ca58f0871
   VisionCamera: b6f1bcca548d14050bf92fa9273c9f2de7240656
   Yoga: d1c536142c5ff8ec8cd856ab2a7c227a1d875c8e
 
-PODFILE CHECKSUM: 7af05b0dcc1fc69091b3e209deded5d5c993466a
+PODFILE CHECKSUM: 039564626681186109a06d1e1dde1ef65451fc55
 
 COCOAPODS: 1.16.2

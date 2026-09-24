@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
 import { logout as kakaoLogout } from '@react-native-seoul/kakao-login';
-import { api, type LoginResponse } from './api';
+import { api, setToken, type LoginResponse } from './api';
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from './config';
 
 export const googleLoginReady = GOOGLE_WEB_CLIENT_ID.length > 0
@@ -64,4 +64,17 @@ export async function loginWithApple(): Promise<LoginResponse | null> {
     }
     throw error;
   }
+}
+
+// Apple 설정에서 연결을 해제하면 해당 로그인 세션도 종료, 다른 제공자 로그인은 유지
+export function observeAppleRevocation() {
+  if (!appleLoginSupported) return () => {};
+  return appleAuth.onCredentialRevoked(async () => {
+    try {
+      const profile = await api<{ provider: string }>('GET', '/me');
+      if (profile.provider !== 'apple') return;
+      try { await api('POST', '/me/logout'); }
+      finally { await clearSocialLogin(); setToken(null); }
+    } catch { /* 만료 세션은 API 계층에서 이미 로그아웃 처리 */ }
+  });
 }

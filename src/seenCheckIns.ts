@@ -7,6 +7,7 @@ const validId = (id: unknown): id is number => typeof id === 'number' && Number.
 export function createSeenCheckInsStore(userId: number | null) {
   const key = `moin.seen-check-ins.${userId}`;
   let snapshot: Snapshot = { ready: userId === null, ids: new Set() };
+  let disposed = false;
   let loading: Promise<void> | undefined;
   let writes = Promise.resolve();
   const listeners = new Set<() => void>();
@@ -26,6 +27,7 @@ export function createSeenCheckInsStore(userId: number | null) {
           return Array.isArray(parsed) ? parsed.filter(validId) : [];
         } catch { return []; }
       }).catch(() => []).then(saved => {
+        if (disposed) return;
         const changed = snapshot.ids.size > 0;
         publish({ ready: true, ids: new Set([...saved, ...snapshot.ids]) });
         if (changed) save();
@@ -33,9 +35,15 @@ export function createSeenCheckInsStore(userId: number | null) {
       return loading;
     },
     markSeen: (id: number | null) => {
-      if (userId === null || !validId(id) || snapshot.ids.has(id)) return;
+      if (disposed || userId === null || !validId(id) || snapshot.ids.has(id)) return;
       publish({ ...snapshot, ids: new Set([...snapshot.ids, id]) });
       if (snapshot.ready) save();
+    },
+    clear: async () => {
+      disposed = true;
+      await writes;
+      await AsyncStorage.removeItem(key);
+      publish({ ready: true, ids: new Set() });
     },
     flush: () => writes,
   };

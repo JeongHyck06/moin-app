@@ -78,6 +78,9 @@ jest.mock('@invertase/react-native-apple-authentication', () => {
       Scope: { FULL_NAME: 0, EMAIL: 1 },
       Error: { CANCELED: '1001' },
       performRequest: jest.fn(),
+      onCredentialRevoked: () => () => {},
     },
   };
 });
+
+jest.mock('react-native-permissions', () => require('react-native-permissions/mock'));
