@@ -99,7 +99,8 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
       </View>
       {certification !== null && (
         <CheckInViewer
-          items={g.members.flatMap(m => m.videoUrl ? [{ userId: m.userId, name: m.nickname, path: m.videoUrl }] : [])}
+          groupId={g.id}
+          items={g.members.flatMap(m => m.videoUrl ? [{ userId: m.userId, name: m.nickname, path: m.videoUrl, checkInId: m.checkInId }] : [])}
           initialUserId={certification}
           period={period}
           onClose={() => setCertification(null)}
