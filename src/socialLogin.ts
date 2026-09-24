@@ -31,7 +31,13 @@ export async function loginWithGoogle(): Promise<LoginResponse | null> {
     if (!result.data.idToken) throw new Error('Google 인증 정보를 받지 못했어요. 다시 시도해 주세요.');
     return await api<LoginResponse>('POST', '/auth/google', { idToken: result.data.idToken });
   } catch (error) {
-    if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) return null;
+    if (isErrorWithCode(error)) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) return null;
+      // Android OAuth의 패키지·서명 지문 불일치는 사용자 재인증으로 해결되지 않음
+      if (error.code === '10' || error.code === 'DEVELOPER_ERROR') {
+        throw new Error('앱의 Google 로그인 설정에 문제가 있어요. 다른 로그인 방법을 이용해 주세요.');
+      }
+    }
     throw error;
   }
 }
