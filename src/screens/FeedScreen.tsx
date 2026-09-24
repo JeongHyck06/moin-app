@@ -7,11 +7,12 @@ import { api, videoUrl, type Feed, type FeedMember } from '../api';
 import { addDays, koreanDate, toISODate } from '../date';
 import type { RootStackParamList } from '../navigation';
 import MemberAvatar from '../components/MemberAvatar';
+import CheckInComments from '../components/CheckInComments';
+import SwipeUpArea from '../components/SwipeUpArea';
 
 const BG = '#17171A';
-const SWIPE = 60; // 세로 스와이프로 인정할 최소 이동량
 
-// Figma Feed (47:617) 스토리형, 좌우 페이징은 FlatList, 상하는 터치 시작·끝 y 차이로 판정
+// 좌우 탭·페이징으로 멤버 이동, 위로 스와이프는 현재 인증의 댓글 열기
 export default function FeedScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'Feed'>) {
   const { groupId } = route.params;
   const insets = useSafeAreaInsets();
@@ -21,7 +22,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
   const [feed, setFeed] = useState<Feed | null>(null);
   const [index, setIndex] = useState(0);
   const list = useRef<FlatList<FeedMember>>(null);
-  const touchY = useRef(0);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const activeIndex = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
@@ -31,6 +32,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
     setFeed(null);
     setError(null);
     setIndex(0);
+    setCommentsOpen(false);
     activeIndex.current = 0;
     api<Feed>('GET', `/groups/${groupId}/check-ins?date=${date}`)
       .then(f => {
@@ -60,17 +62,6 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
   return (
     <View
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 40) }]}
-      onTouchStart={e => {
-        touchY.current = e.nativeEvent.pageY;
-      }}
-      onTouchEnd={e => {
-        const dy = e.nativeEvent.pageY - touchY.current;
-        if (dy < -SWIPE) {
-          setDate(d => addDays(d, -1)); // 위로 밀면 이전 날짜
-        } else if (dy > SWIPE && date < today) {
-          setDate(d => addDays(d, 1));
-        }
-      }}
     >
       <View style={styles.segments}>
         {members.map((m, i) => (
@@ -89,12 +80,19 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
           <Image source={require('../assets/x.png')} style={styles.icon} />
         </Pressable>
       </View>
+      <View style={styles.dates}>
+        <Pressable accessibilityRole="button" accessibilityLabel="이전 날짜" style={styles.dateButton} onPress={() => setDate(d => addDays(d, -1))}><Text style={styles.nameText}>‹ 이전 날</Text></Pressable>
+        <Text style={styles.meta}>{koreanDate(date)}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="다음 날짜" accessibilityState={{ disabled: date >= today }} disabled={date >= today} style={styles.dateButton} onPress={() => setDate(d => addDays(d, 1))}><Text style={[styles.nameText, date >= today && styles.disabled]}>다음 날 ›</Text></Pressable>
+      </View>
+      <SwipeUpArea enabled={current?.checkInId != null && !commentsOpen} onSwipeUp={() => setCommentsOpen(true)}>
       <FlatList
         ref={list}
         data={members}
         horizontal
         pagingEnabled
-        extraData={index}
+        extraData={`${index}-${commentsOpen}`}
+        scrollEnabled={!commentsOpen}
         getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         showsHorizontalScrollIndicator={false}
         keyExtractor={m => String(m.userId)}
@@ -115,7 +113,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         renderItem={({ item, index: i }) => (
           <View style={[styles.page, { width }]}>
             {item.videoUrl ? (
-              <Video source={{ uri: videoUrl(item.videoUrl) }} style={StyleSheet.absoluteFill} resizeMode="cover" controls={false} repeat paused={i !== index} />
+              <Video source={{ uri: videoUrl(item.videoUrl) }} style={StyleSheet.absoluteFill} resizeMode="cover" controls={false} repeat paused={i !== index || commentsOpen} playInBackground={false} playWhenInactive={false} />
             ) : (
               <Text style={styles.placeholder}>아직 인증 전이에요</Text>
             )}
@@ -126,7 +124,10 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
           </View>
         )}
       />
-      <Text style={styles.hint}>왼쪽 탭 이전 · 오른쪽 탭 다음 · 상하 스와이프 날짜 이동</Text>
+      </SwipeUpArea>
+      <Text style={styles.hint}>왼쪽 탭 이전 · 오른쪽 탭 다음</Text>
+      {current?.checkInId != null && <Pressable accessibilityRole="button" accessibilityLabel="댓글 열기" style={styles.dateButton} onPress={() => setCommentsOpen(true)}><Text style={styles.nameText}>위로 스와이프해 댓글 남기기 ↑</Text></Pressable>}
+      {commentsOpen && current?.checkInId != null && <CheckInComments key={current.checkInId} groupId={groupId} checkInId={current.checkInId} name={current.nickname} onClose={() => setCommentsOpen(false)} />}
     </View>
   );
 }
@@ -148,4 +149,7 @@ const styles = StyleSheet.create({
   retry: { padding: 24 },
   placeholder: { fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', alignSelf: 'center' },
   hint: { fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', paddingTop: 12 },
+  dates: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
+  dateButton: { minHeight: 44, minWidth: 72, justifyContent: 'center', alignItems: 'center' },
+  disabled: { opacity: 0.35 },
 });
