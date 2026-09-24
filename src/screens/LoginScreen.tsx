@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppleButton } from '@invertase/react-native-apple-authentication';
-import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login as kakaoLogin } from '@react-native-seoul/kakao-login';
 import { api, setToken, type LoginResponse } from '../api';
@@ -86,15 +85,17 @@ export default function LoginScreen({ onLogin }: { onLogin: (user: LoginResponse
         onPress={login}
         disabled={busy || (!kakaoReady && !DEV_LOGIN_ENABLED)}
       />
-      <View style={styles.googleButton}>
-        <GoogleSigninButton
-          size={GoogleSigninButton.Size.Wide}
-          color={GoogleSigninButton.Color.Light}
-          style={styles.providerButton}
-          disabled={busy}
-          onPress={() => socialLogin('google')}
-        />
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Google 계정으로 로그인"
+        accessibilityState={{ disabled: busy, busy }}
+        style={({ pressed }) => [styles.googleButton, (busy || pressed) && styles.googleButtonDimmed]}
+        disabled={busy}
+        onPress={() => socialLogin('google')}
+      >
+        <Image source={require('../assets/google-g.png')} style={styles.googleLogo} accessible={false} />
+        <Text style={styles.googleLabel}>Google 계정으로 로그인</Text>
+      </Pressable>
       {appleLoginSupported && (
         <AppleButton
           buttonStyle={AppleButton.Style.WHITE}
@@ -133,7 +134,10 @@ const styles = StyleSheet.create({
   headline: { fontSize: 28, fontWeight: '900', color: colors.textPrimary, textAlign: 'center' },
   sub: { fontSize: 15, color: colors.textSecondary, textAlign: 'center' },
   actions: { marginHorizontal: spacing.lg, gap: 10, paddingTop: 12 },
-  // 네이티브 Google 버튼의 비활성 배경이 반투명 검정이라 흰색 바탕 유지
-  googleButton: { backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden' },
+  // 네이티브 사각 버튼을 둥근 컨테이너로 잘라 생기던 이중 테두리 제거
+  googleButton: { minHeight: 48, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: '#747775', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  googleButtonDimmed: { opacity: 0.65 },
+  googleLogo: { width: 20, height: 20, resizeMode: 'contain' },
+  googleLabel: { color: '#1F1F1F', fontSize: 14, fontWeight: '500', flexShrink: 1, textAlign: 'center' },
   providerButton: { width: '100%', height: 48 },
 });
