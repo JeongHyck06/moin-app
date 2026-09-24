@@ -13,6 +13,7 @@ import StreakBadge from '../components/StreakBadge';
 import GroupCalendar from '../components/GroupCalendar';
 import CheckInViewer from '../components/CheckInViewer';
 import { card, colors, radius, spacing } from '../theme';
+import { useSeenCheckIns } from '../SeenCheckInsProvider';
 
 // Figma Group Detail (46:338)
 export default function GroupDetailScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'GroupDetail'>) {
@@ -21,6 +22,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [certification, setCertification] = useState<number | null>(null);
+  const seen = useSeenCheckIns();
 
   // 인증하고 돌아오면 스트릭·진행도가 바뀌므로 포커스마다 다시 조회
   useFocusEffect(
@@ -67,7 +69,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
             <Pressable
               key={m.userId}
               accessibilityRole="button"
-              accessibilityLabel={`${m.nickname}님의 인증 보기`}
+              accessibilityLabel={`${m.nickname}님의 인증 보기${seen.ready && m.checkInId != null ? seen.ids.has(m.checkInId) ? ', 확인한 인증' : ', 새 인증' : ''}`}
               style={({ pressed }) => pressed && styles.memberPressed}
               onPress={() => {
                 // 주간 목표를 못 채운 멤버도 인증이 한 건이라도 있으면 재생
@@ -81,6 +83,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
                   done={m.done}
                   avatarUrl={m.avatarUrl}
                   videoUrl={m.videoUrl}
+                  unseen={seen.ready && m.checkInId != null && !seen.ids.has(m.checkInId)}
                   size={56}
                   progress={g.frequency === 'WEEKLY' ? `${m.doneCount}/${g.weeklyTarget}` : undefined}
                 />
