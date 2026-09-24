@@ -13,5 +13,5 @@ export function SeenCheckInsProvider({ userId, children }: { userId: number | nu
 export function useSeenCheckIns() {
   const store = useContext(SeenContext);
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  return { ...snapshot, markSeen: store.markSeen };
+  return { ...snapshot, markSeen: store.markSeen, clear: store.clear };
 }
