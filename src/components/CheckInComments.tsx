@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, BackHandler, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, BackHandler, FlatList, Image, Keyboard, KeyboardAvoidingView, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, avatarUrl, type CheckInComment, type CommentPage } from '../api';
 import { colors, spacing } from '../theme';
@@ -22,7 +22,40 @@ export default function CheckInComments({ groupId, checkInId, name, onClose }: P
   const posting = useRef(false);
   const list = useRef<FlatList<CheckInComment>>(null);
   const slide = useRef(new Animated.Value(300)).current;
+  const listOffset = useRef(0);
+  const listStartedAtTop = useRef(true);
+  const closing = useRef(false);
+  const { height } = useWindowDimensions();
   const path = `/groups/${groupId}/check-ins/${checkInId}/comments`;
+
+  const close = useCallback(() => {
+    if (closing.current) return;
+    closing.current = true;
+    Keyboard.dismiss();
+    Animated.timing(slide, { toValue: height, duration: 200, useNativeDriver: true })
+      .start(({ finished }) => { if (finished) onClose(); });
+  }, [height, onClose, slide]);
+
+  // 목록은 맨 위에서 시작한 제스처만 닫기로 전환, 손잡이는 스크롤 위치와 무관
+  const { drag, handleDrag } = useMemo(() => {
+    const createDrag = (fromList: boolean) => PanResponder.create({
+      onStartShouldSetPanResponderCapture: () => {
+        if (fromList) listStartedAtTop.current = listOffset.current <= 0;
+        return false;
+      },
+      onMoveShouldSetPanResponderCapture: (_, { dx, dy }) => !closing.current
+        && (!fromList || (listStartedAtTop.current && listOffset.current <= 0))
+        && dy > 10 && dy > Math.abs(dx) * 1.5,
+      onPanResponderGrant: () => { slide.stopAnimation(); Keyboard.dismiss(); },
+      onPanResponderMove: (_, { dy }) => slide.setValue(Math.max(0, dy)),
+      onPanResponderRelease: (_, { dy, vy }) => {
+        if (dy > 80 || (dy > 20 && vy > 0.7)) close();
+        else Animated.spring(slide, { toValue: 0, useNativeDriver: true, overshootClamping: true }).start();
+      },
+      onPanResponderTerminate: () => Animated.spring(slide, { toValue: 0, useNativeDriver: true, overshootClamping: true }).start(),
+    });
+    return { drag: createDrag(true), handleDrag: createDrag(false) };
+  }, [close, slide]);
 
   const load = useCallback(async (before: number | null = null) => {
     if (fetching.current) return;
@@ -52,9 +85,9 @@ export default function CheckInComments({ groupId, checkInId, name, onClose }: P
   }, [load, slide]);
 
   useEffect(() => {
-    const listener = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => { close(); return true; });
     return () => listener.remove();
-  }, [onClose]);
+  }, [close]);
 
   const send = async () => {
     const body = draft.trim();
@@ -78,38 +111,46 @@ export default function CheckInComments({ groupId, checkInId, name, onClose }: P
 
   return (
     <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <Pressable style={[StyleSheet.absoluteFill, styles.backdrop]} accessibilityRole="button" accessibilityLabel="댓글 닫기" onPress={onClose} />
+      <Pressable style={[StyleSheet.absoluteFill, styles.backdrop]} accessibilityRole="button" accessibilityLabel="댓글 닫기" onPress={close} />
       <Animated.View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 12), transform: [{ translateY: slide }] }]} accessibilityViewIsModal>
-        <View style={styles.header}>
-          <View style={styles.titleArea}>
-            <Text style={styles.title}>댓글</Text>
-            <Text style={styles.meta} numberOfLines={1}>{name}님의 인증</Text>
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="댓글 닫기" style={styles.action} onPress={onClose}><Text style={styles.actionText}>닫기</Text></Pressable>
-        </View>
-        <FlatList
-          ref={list}
-          data={items}
-          keyExtractor={item => String(item.id)}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={!loading && !loadError ? <Text style={styles.empty}>첫 응원을 남겨보세요</Text> : undefined}
-          renderItem={({ item }) => (
-            <View style={styles.comment}>
-              <Image source={item.avatarUrl ? { uri: avatarUrl(item.avatarUrl) } : require('../assets/avatar-empty.png')} style={styles.avatar} />
-              <View style={styles.content}>
-                <Text style={styles.author}>{item.nickname}</Text>
-                <Text style={styles.body}>{item.body}</Text>
-                <Text style={styles.meta}>{new Date(item.createdAt).toLocaleString('ko-KR')}</Text>
-              </View>
+        <View {...handleDrag.panHandlers}>
+          <View style={styles.handle} />
+          <View style={styles.header}>
+            <View style={styles.titleArea}>
+              <Text style={styles.title}>댓글</Text>
+              <Text style={styles.meta} numberOfLines={1}>{name}님의 인증</Text>
             </View>
-          )}
-          ListFooterComponent={loading ? <ActivityIndicator color={colors.accent} accessibilityLabel="댓글 불러오는 중" /> : loadError ? (
-            <Pressable accessibilityRole="button" style={styles.action} onPress={() => load(loaded ? cursor : null)}><Text style={styles.error}>{loadError} · 다시 시도</Text></Pressable>
-          ) : cursor != null ? (
-            <Pressable accessibilityRole="button" style={styles.action} onPress={() => load(cursor)}><Text style={styles.actionText}>이전 댓글 더 보기</Text></Pressable>
-          ) : undefined}
-        />
+            <Pressable accessibilityRole="button" accessibilityLabel="댓글 닫기" style={styles.action} onPress={close}><Text style={styles.actionText}>닫기</Text></Pressable>
+          </View>
+        </View>
+        <View style={styles.commentList} {...drag.panHandlers}>
+          <FlatList
+            ref={list}
+            data={items}
+            keyExtractor={item => String(item.id)}
+            keyboardShouldPersistTaps="handled"
+            onScroll={e => { listOffset.current = Math.max(0, e.nativeEvent.contentOffset.y); }}
+            scrollEventThrottle={16}
+            bounces={false}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={!loading && !loadError ? <Text style={styles.empty}>첫 응원을 남겨보세요</Text> : undefined}
+            renderItem={({ item }) => (
+              <View style={styles.comment}>
+                <Image source={item.avatarUrl ? { uri: avatarUrl(item.avatarUrl) } : require('../assets/avatar-empty.png')} style={styles.avatar} />
+                <View style={styles.content}>
+                  <Text style={styles.author}>{item.nickname}</Text>
+                  <Text style={styles.body}>{item.body}</Text>
+                  <Text style={styles.meta}>{new Date(item.createdAt).toLocaleString('ko-KR')}</Text>
+                </View>
+              </View>
+            )}
+            ListFooterComponent={loading ? <ActivityIndicator color={colors.accent} accessibilityLabel="댓글 불러오는 중" /> : loadError ? (
+              <Pressable accessibilityRole="button" style={styles.action} onPress={() => load(loaded ? cursor : null)}><Text style={styles.error}>{loadError} · 다시 시도</Text></Pressable>
+            ) : cursor != null ? (
+              <Pressable accessibilityRole="button" style={styles.action} onPress={() => load(cursor)}><Text style={styles.actionText}>이전 댓글 더 보기</Text></Pressable>
+            ) : undefined}
+          />
+        </View>
         {sendError && <Text style={styles.error} accessibilityLiveRegion="polite">{sendError}</Text>}
         <View style={styles.composer}>
           <TextInput
@@ -138,6 +179,8 @@ const styles = StyleSheet.create({
   backdrop: { backgroundColor: 'rgba(0,0,0,0.55)' },
   sheet: { height: '72%', backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: spacing.lg, paddingTop: 16 },
   header: { flexDirection: 'row', alignItems: 'center', paddingBottom: 12 },
+  handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: colors.separator, marginBottom: 8 },
+  commentList: { flex: 1 },
   titleArea: { flex: 1, gap: 4 },
   title: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   meta: { fontSize: 11, color: colors.textSecondary },
