@@ -32,7 +32,7 @@ export default function CreateGroup4Screen({ navigation, route }: NativeStackScr
       title="난이도를 정해주세요"
       subtitle="기본값으로 넘어가도 괜찮아요"
       hint={allowedAbsences === 0 ? '전원이 인증해야 완료돼요' : `멤버 ${allowedAbsences}명까지 빠져도 완료돼요`}
-      note="프리즈: 실패한 날에도 월 1회 스트릭을 지켜줘요"
+      note="프리즈: 멤버마다 월 1개 무료, 원하는 날짜의 본인 인증 1회를 채워요"
       cta={{ label: '다음', disabled: busy, onPress: submit }}
     >
       <View style={card}>
