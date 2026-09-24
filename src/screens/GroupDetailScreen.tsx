@@ -74,6 +74,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
               onPress={() => {
                 // 주간 목표를 못 채운 멤버도 인증이 한 건이라도 있으면 재생
                 if (m.videoUrl) setCertification(m.userId);
+                else if (m.frozen) Alert.alert('프리즈로 인증 완료', `${m.nickname}님이 프리즈로 인증 1회를 채웠어요`);
                 else Alert.alert('아직 인증 전이에요', `${m.nickname}님은 ${period} 올린 인증이 없어요`);
               }}
             >
@@ -91,7 +92,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
             </Pressable>
           ))}
         </View>
-        <GroupCalendar key={g.id} groupId={g.id} onDatePress={date => navigation.navigate('Feed', { groupId: g.id, date })} />
+        <GroupCalendar key={g.id} groupId={g.id} onChanged={() => api<GroupDetail>('GET', `/groups/${id}`).then(setDetail).catch(e => Alert.alert('불러오기 실패', (e as Error).message))} onDatePress={date => navigation.navigate('Feed', { groupId: g.id, date })} />
       </ScrollView>
       <View style={styles.cta}>
         <Button
