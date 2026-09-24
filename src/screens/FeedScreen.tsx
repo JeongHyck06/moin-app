@@ -1,14 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import Video from 'react-native-video';
-import { api, videoUrl, type Feed, type FeedMember } from '../api';
+import { api, type Feed } from '../api';
 import { addDays, koreanDate, toISODate } from '../date';
 import type { RootStackParamList } from '../navigation';
 import MemberAvatar from '../components/MemberAvatar';
 import CheckInComments from '../components/CheckInComments';
-import SwipeUpArea from '../components/SwipeUpArea';
+import StoryPager from '../components/StoryPager';
 
 const BG = '#17171A';
 
@@ -16,14 +15,11 @@ const BG = '#17171A';
 export default function FeedScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'Feed'>) {
   const { groupId } = route.params;
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const today = toISODate(new Date());
   const [date, setDate] = useState(route.params.date ?? today);
   const [feed, setFeed] = useState<Feed | null>(null);
   const [index, setIndex] = useState(0);
-  const list = useRef<FlatList<FeedMember>>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const activeIndex = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
 
@@ -33,7 +29,6 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
     setError(null);
     setIndex(0);
     setCommentsOpen(false);
-    activeIndex.current = 0;
     api<Feed>('GET', `/groups/${groupId}/check-ins?date=${date}`)
       .then(f => {
         if (!alive) {
@@ -41,7 +36,6 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         }
         setFeed(f);
         setIndex(0);
-        list.current?.scrollToOffset({ offset: 0, animated: false });
       })
       .catch(e => { if (alive) setError((e as Error).message); });
     return () => {
@@ -51,17 +45,10 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
 
   const members = feed?.members ?? [];
   const current = members[index];
-  const move = (direction: number) => {
-    const next = Math.max(0, Math.min(members.length - 1, activeIndex.current + direction));
-    if (next === activeIndex.current) return;
-    activeIndex.current = next;
-    setIndex(next);
-    list.current?.scrollToOffset({ offset: next * width, animated: false });
-  };
 
   return (
     <View
-      style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 40) }]}
+      style={[styles.screen, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 8) }]}
     >
       <View style={styles.segments}>
         {members.map((m, i) => (
@@ -85,48 +72,16 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         <Text style={styles.meta}>{koreanDate(date)}</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="다음 날짜" accessibilityState={{ disabled: date >= today }} disabled={date >= today} style={styles.dateButton} onPress={() => setDate(d => addDays(d, 1))}><Text style={[styles.nameText, date >= today && styles.disabled]}>다음 날 ›</Text></Pressable>
       </View>
-      <SwipeUpArea enabled={current?.checkInId != null && !commentsOpen} onSwipeUp={() => setCommentsOpen(true)}>
-      <FlatList
-        ref={list}
-        data={members}
-        horizontal
-        pagingEnabled
-        extraData={`${index}-${commentsOpen}`}
-        scrollEnabled={!commentsOpen}
-        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={m => String(m.userId)}
-        onMomentumScrollEnd={e => {
-          const next = Math.max(0, Math.min(members.length - 1, Math.round(e.nativeEvent.contentOffset.x / width)));
-          activeIndex.current = next;
-          setIndex(next);
-        }}
-        ListEmptyComponent={
-          <View style={[styles.empty, { width }]}>
-            {error ? (
-              <Pressable accessibilityRole="button" style={styles.retry} onPress={() => setRetry(n => n + 1)}>
-                <Text style={styles.meta}>{error} · 다시 시도</Text>
-              </Pressable>
-            ) : feed ? <Text style={styles.placeholder}>이 날은 영상이 없어요</Text> : <ActivityIndicator color="#FFFFFF" accessibilityLabel="선택한 날짜 인증 불러오는 중" />}
-          </View>
-        }
-        renderItem={({ item, index: i }) => (
-          <View style={[styles.page, { width }]}>
-            {item.videoUrl ? (
-              <Video source={{ uri: videoUrl(item.videoUrl) }} style={StyleSheet.absoluteFill} resizeMode="cover" controls={false} repeat paused={i !== index || commentsOpen} playInBackground={false} playWhenInactive={false} />
-            ) : (
-              <Text style={styles.placeholder}>아직 인증 전이에요</Text>
-            )}
-            <View style={styles.tapZones}>
-              <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="이전 멤버 인증" disabled={i === 0} onPress={() => move(-1)} />
-              <Pressable style={styles.tapZone} accessibilityRole="button" accessibilityLabel="다음 멤버 인증" disabled={i === members.length - 1} onPress={() => move(1)} />
-            </View>
-          </View>
-        )}
-      />
-      </SwipeUpArea>
-      <Text style={styles.hint}>왼쪽 탭 이전 · 오른쪽 탭 다음</Text>
-      {current?.checkInId != null && <Pressable accessibilityRole="button" accessibilityLabel="댓글 열기" style={styles.dateButton} onPress={() => setCommentsOpen(true)}><Text style={styles.nameText}>위로 스와이프해 댓글 남기기 ↑</Text></Pressable>}
+      {members.length > 0 ? (
+        <StoryPager key={`${groupId}-${date}`} items={members.map(m => ({ userId: m.userId, checkInId: m.checkInId, path: m.videoUrl }))} index={index} onIndexChange={setIndex} paused={false} commentsOpen={commentsOpen} onComments={() => setCommentsOpen(true)} />
+      ) : (
+        <View style={styles.empty}>
+          {error ? (
+            <Pressable accessibilityRole="button" style={styles.retry} onPress={() => setRetry(n => n + 1)}><Text style={styles.meta}>{error} · 다시 시도</Text></Pressable>
+          ) : feed ? <Text style={styles.placeholder}>이 날은 영상이 없어요</Text> : <ActivityIndicator color="#FFFFFF" accessibilityLabel="선택한 날짜 인증 불러오는 중" />}
+        </View>
+      )}
+      {current?.checkInId != null && <Pressable accessibilityRole="button" accessibilityLabel="댓글 열기" style={styles.dateButton} onPress={() => setCommentsOpen(true)}><Text style={styles.nameText}>댓글</Text></Pressable>}
       {commentsOpen && current?.checkInId != null && <CheckInComments key={current.checkInId} groupId={groupId} checkInId={current.checkInId} name={current.nickname} onClose={() => setCommentsOpen(false)} />}
     </View>
   );
@@ -142,13 +97,9 @@ const styles = StyleSheet.create({
   nameText: { fontSize: 15, fontWeight: '500', color: '#FFFFFF' },
   meta: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
   icon: { width: 28, height: 28 },
-  page: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  tapZones: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row' },
-  tapZone: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   retry: { padding: 24 },
   placeholder: { fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center', alignSelf: 'center' },
-  hint: { fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', paddingTop: 12 },
   dates: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
   dateButton: { minHeight: 44, minWidth: 72, justifyContent: 'center', alignItems: 'center' },
   disabled: { opacity: 0.35 },

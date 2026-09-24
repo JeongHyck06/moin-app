@@ -8,7 +8,7 @@ jest.mock('react-native-vision-camera', () => ({
   useMicrophonePermission: () => ({ hasPermission: true, canRequestPermission: false, requestPermission: async () => true }),
   useVideoOutput: () => ({ createRecorder: async () => ({ startRecording: async () => {}, stopRecording: async () => {} }) }),
 }));
-jest.mock('react-native-video', () => ({ __esModule: true, default: () => null }));
+jest.mock('react-native-video', () => ({ __esModule: true, default: () => null, ViewType: { TEXTURE: 0, SURFACE: 1 } }));
 
 // 패키지가 제공하는 mock 은 ESM 이라 babel 변환 뒤 default 로 들어옴
 jest.mock('@react-native-async-storage/async-storage', () => {
