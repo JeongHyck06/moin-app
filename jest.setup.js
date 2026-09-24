@@ -1,4 +1,7 @@
 /* eslint-env jest */
+// 결제·광고의 실제 검증은 서버에서 수행, 화면 테스트에서는 네이티브 초기화 제외
+jest.mock('react-native-iap', () => ({ useIAP: jest.fn(), ErrorCode: { UserCancelled: 'user-cancelled' }, getAvailablePurchases: jest.fn() }));
+jest.mock('react-native-google-mobile-ads', () => ({ __esModule: true, default: jest.fn(), AdsConsent: {}, RewardedAd: {}, AdEventType: {}, RewardedAdEventType: {} }));
 // 카메라·영상은 네이티브 모듈이라 jest 에서는 빈 구현으로 대체
 jest.mock('react-native-vision-camera', () => ({
   Camera: () => null,
