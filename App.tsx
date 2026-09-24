@@ -5,6 +5,7 @@ import { DarkTheme, NavigationContainer, type NavigationContainerRef } from '@re
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { api, loadToken, onTokenChange, type LoginResponse, type Profile } from './src/api';
+import { observeAppleRevocation } from './src/socialLogin';
 import { registerPushToken } from './src/push';
 import { useNotificationOpen } from './src/useNotificationOpen';
 import UpdateGate from './src/components/UpdateGate';
@@ -64,6 +65,7 @@ function App() {
   const [ready, setReady] = useState(false);
   const nav = useRef<NavigationContainerRef<RootStackParamList>>(null);
   useNotificationOpen(nav, user !== null);
+  useEffect(observeAppleRevocation, []);
 
   useEffect(() => {
     // 저장된 토큰으로 프로필을 받아오면 로그인 상태 복원, 만료면 request 가 토큰을 지움
