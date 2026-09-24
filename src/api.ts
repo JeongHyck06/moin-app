@@ -21,6 +21,7 @@ export type MemberStatus = {
   avatarUrl: string | null;
   done: boolean;
   doneCount: number;
+  frozen?: boolean;
   checkInId: number | null;
   videoUrl: string | null;
 };
@@ -99,6 +100,7 @@ export type FeedMember = {
   checkInId: number | null; // 영상 없으면 세 필드 모두 null
   videoUrl: string | null;
   createdAt: string | null;
+  frozen?: boolean;
 };
 
 export type Feed = { date: string; completedCount: number; activeCount: number; members: FeedMember[] };
@@ -242,3 +244,7 @@ export const videoUrl = (path: string) => BASE_URL + path;
 
 // 소셜 제공자의 절대 URL과 직접 업로드한 서버 상대 경로를 함께 지원
 export const avatarUrl = (path: string) => path.startsWith('/') ? BASE_URL + path : path;
+
+// 보유 수량은 서버 원장 기준, 월 무료분은 모임별이며 구매·광고분은 계정 공용
+export type FreezeInventory = { enabled: boolean; monthlyRemaining: number; balance: number; available: number; today: string; earliestDate: string; checkedDates: string[]; frozenDates: string[] };
+export type FreezeWallet = { balance: number; adAvailable: boolean; nextAdDate: string; productId: string; accountToken: string; appleReady: boolean; googleReady: boolean; androidAdUnit: string; iosAdUnit: string };

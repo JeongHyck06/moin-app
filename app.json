@@ -1,4 +1,9 @@
 {
   "name": "Moin",
-  "displayName": "Moin"
+  "displayName": "Moin",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-1582609839942668~5385415893",
+    "ios_app_id": "ca-app-pub-1582609839942668~2574410562",
+    "delay_app_measurement_init": true
+  }
 }

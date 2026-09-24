@@ -19,6 +19,7 @@ export type RootStackParamList = {
   Complete: { result: CheckInResult };
   Feed: { groupId: number; date?: string };
   Calendar: { groupId: number };
+  FreezeShop: undefined;
   NotificationSettings: undefined;
   EditGroupName: { id: number; name: string };
   EditProfile: { profile: Profile };

@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
-import { api, type Calendar } from '../api';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { api, type Calendar, type FreezeInventory } from '../api';
 import {
   addMonths,
   koreanMonth,
@@ -70,10 +71,17 @@ function Stat({ value, label }: { value: string | number; label: string }) {
 export default function GroupCalendar({
   groupId,
   onDatePress,
+  onChanged,
 }: {
   groupId: number;
   onDatePress?: (date: string) => void;
+  onChanged?: () => void;
 }) {
+  const navigation = useNavigation();
+  const [freeze, setFreeze] = useState<FreezeInventory | null>(null);
+  const [choosing, setChoosing] = useState(false);
+  const [using, setUsing] = useState(false);
+  const submitting = useRef(false);
   const thisMonth = toISOMonth(new Date());
   const [month, setMonth] = useState(thisMonth);
   const [cal, setCal] = useState<Calendar | null>(null);
@@ -86,6 +94,8 @@ export default function GroupCalendar({
     let alive = true;
     setCal(null);
     setError(null);
+    setFreeze(null);
+    api<FreezeInventory>('GET', `/groups/${groupId}/freezes?month=${month}`).then(value => { if (alive) setFreeze(value); }).catch(() => {});
     api<Calendar>('GET', `/groups/${groupId}/calendar?month=${month}`)
       .then(value => {
         if (alive) setCal(value);
@@ -98,6 +108,28 @@ export default function GroupCalendar({
     };
   }, [groupId, month, retry, focused]);
 
+  const applyFreeze = async (date: string) => {
+    if (submitting.current) return;
+    submitting.current = true;
+    setUsing(true);
+    try {
+      await api<FreezeInventory>('POST', `/groups/${groupId}/freezes`, { date });
+      setChoosing(false);
+      setRetry(n => n + 1);
+      onChanged?.();
+      Alert.alert('프리즈 사용 완료', `${date} 본인 인증 1회를 채웠어요`);
+    } catch (e) { Alert.alert('프리즈 사용 실패', (e as Error).message); }
+    finally { submitting.current = false; setUsing(false); }
+  };
+  const selectDate = (date: string) => {
+    if (!choosing) { onDatePress?.(date); return; }
+    if (!freeze || using) return;
+    if (date < freeze.earliestDate || date > freeze.today) { Alert.alert('날짜를 확인해주세요', '모임에 참여한 날부터 오늘까지 사용할 수 있어요'); return; }
+    if (freeze.checkedDates.includes(date)) { Alert.alert('이미 인증한 날짜예요'); return; }
+    Alert.alert(`${date} 프리즈 사용`, '프리즈 1개로 내 인증 1회를 채워요. 사용 후 취소할 수 없어요.', [
+      { text: '취소', style: 'cancel' }, { text: '1개 사용', onPress: () => applyFreeze(date) },
+    ]);
+  };
   const cells = cal ? monthCells(month, cal.periods) : [];
   const weeks: (Cell | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) {
@@ -106,7 +138,14 @@ export default function GroupCalendar({
 
   return (
     <View style={styles.content}>
-      <Text style={styles.section}>기록</Text>
+      <View style={styles.monthRow}>
+        <Text style={styles.section}>기록</Text>
+        {freeze?.enabled && <Pressable accessibilityRole="button" disabled={using} style={styles.freezeButton} onPress={() => {
+          if (freeze.available > 0) setChoosing(v => !v);
+          else navigation.navigate('FreezeShop');
+        }}><Text style={styles.freezeText}>{using ? '사용 중…' : choosing ? '선택 취소' : `프리즈 ${freeze.available}개`}</Text></Pressable>}
+      </View>
+      {choosing && <View style={styles.monthRow}><Text style={styles.error}>사용할 날짜를 선택해주세요</Text><Pressable accessibilityRole="button" style={styles.freezeButton} onPress={() => navigation.navigate('FreezeShop')}><Text style={styles.freezeText}>보관함</Text></Pressable></View>}
       <View style={styles.monthRow}>
         <Text style={styles.month}>{koreanMonth(month)}</Text>
         <View style={styles.arrows}>
@@ -162,9 +201,9 @@ export default function GroupCalendar({
                 return c ? (
                   <CalendarCell
                     key={c.iso}
-                    cell={c}
+                    cell={freeze?.frozenDates.includes(c.iso) ? { ...c, status: 'FROZEN' } : c}
                     today={cal?.today ?? ''}
-                    onPress={onDatePress ? () => onDatePress(c.iso) : undefined}
+                    onPress={onDatePress || choosing ? () => selectDate(c.iso) : undefined}
                   />
                 ) : (
                   <View key={`blank-${i}`} style={styles.cell} />
@@ -186,6 +225,8 @@ export default function GroupCalendar({
 }
 
 const styles = StyleSheet.create({
+  freezeButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 },
+  freezeText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   content: { gap: spacing.md },
   section: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   message: { paddingVertical: 20 },

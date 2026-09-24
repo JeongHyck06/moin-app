@@ -83,6 +83,7 @@ export default function MyPageScreen() {
           {groups.length === 0 && <ListRow title="아직 그룹이 없어요" />}
         </View>
         <View style={card}>
+          <ListRow title="프리즈 보관함" subtitle="1개 1,000원 · 광고 보상 주 1회" chevron separator onPress={() => navigation.navigate('FreezeShop')} />
           <ListRow title="알림 설정" chevron onPress={() => navigation.navigate('NotificationSettings')} />
         </View>
         <View style={card}>

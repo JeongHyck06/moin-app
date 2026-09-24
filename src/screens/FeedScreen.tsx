@@ -56,7 +56,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         ))}
       </View>
       <View style={styles.header}>
-        <MemberAvatar done={current?.videoUrl != null} avatarUrl={current?.avatarUrl} videoUrl={current?.videoUrl} size={32} />
+        <MemberAvatar done={current?.videoUrl != null || current?.frozen === true} avatarUrl={current?.avatarUrl} videoUrl={current?.videoUrl} size={32} />
         <View style={styles.name}>
           <Text style={styles.nameText}>{current?.nickname ?? ''}</Text>
           <Text style={styles.meta}>
@@ -73,7 +73,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
         <Pressable accessibilityRole="button" accessibilityLabel="다음 날짜" accessibilityState={{ disabled: date >= today }} disabled={date >= today} style={styles.dateButton} onPress={() => setDate(d => addDays(d, 1))}><Text style={[styles.nameText, date >= today && styles.disabled]}>다음 날 ›</Text></Pressable>
       </View>
       {members.length > 0 ? (
-        <StoryPager key={`${groupId}-${date}`} items={members.map(m => ({ userId: m.userId, checkInId: m.checkInId, path: m.videoUrl }))} index={index} onIndexChange={setIndex} paused={false} commentsOpen={commentsOpen} onComments={() => setCommentsOpen(true)} />
+        <StoryPager key={`${groupId}-${date}`} items={members.map(m => ({ userId: m.userId, checkInId: m.checkInId, path: m.videoUrl, frozen: m.frozen }))} index={index} onIndexChange={setIndex} paused={false} commentsOpen={commentsOpen} onComments={() => setCommentsOpen(true)} />
       ) : (
         <View style={styles.empty}>
           {error ? (

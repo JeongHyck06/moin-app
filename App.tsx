@@ -29,6 +29,7 @@ import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen
 import EditGroupNameScreen from './src/screens/EditGroupNameScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import { colors } from './src/theme';
+import FreezeShopScreen from './src/screens/FreezeShopScreen';
 import { SeenCheckInsProvider } from './src/SeenCheckInsProvider';
 
 const theme = {
@@ -107,6 +108,7 @@ function App() {
           {user ? (
             <>
               <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen name="FreezeShop" component={FreezeShopScreen} />
               <Stack.Screen name="CreateGroup1" component={CreateGroup1Screen} />
               <Stack.Screen name="CreateGroup2" component={CreateGroup2Screen} />
               <Stack.Screen name="CreateGroup3" component={CreateGroup3Screen} />

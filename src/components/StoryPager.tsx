@@ -7,7 +7,7 @@ import { useSeenCheckIns } from '../SeenCheckInsProvider';
 import SwipeUpArea from './SwipeUpArea';
 import { useReducedMotion } from '../useReducedMotion';
 
-export type StoryItem = { userId: number; checkInId: number | null; path: string | null };
+export type StoryItem = { userId: number; checkInId: number | null; path: string | null; frozen?: boolean };
 type Props = { items: StoryItem[]; index: number; onIndexChange: (index: number) => void; paused: boolean; commentsOpen: boolean; onComments: () => void };
 
 // 첫 프레임이 준비된 현재 페이지만 읽음 처리, 옆 페이지 미리 로딩은 제외
@@ -17,7 +17,7 @@ function StoryVideo({ item, active, paused }: { item: StoryItem; active: boolean
   const [attempt, setAttempt] = useState(0);
   const { markSeen } = useSeenCheckIns();
   useEffect(() => { if (active && ready && !failed) markSeen(item.checkInId); }, [active, ready, failed, item.checkInId, markSeen]);
-  if (!item.path) return <Text style={styles.message}>아직 인증 전이에요</Text>;
+  if (!item.path) return <Text style={styles.message}>{item.frozen ? '프리즈로 인증 완료' : '아직 인증 전이에요'}</Text>;
   if (failed) return (
     <Pressable accessibilityRole="button" style={styles.retry} onPress={() => { setFailed(false); setReady(false); setAttempt(n => n + 1); }}>
       <Text style={styles.message}>영상을 불러오지 못했어요 · 다시 시도</Text>

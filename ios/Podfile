@@ -17,6 +17,7 @@ end
 # Firebase 는 static framework 로만 붙는다, SPM 대신 CocoaPods 경로 사용
 $RNFirebaseDisableSPM = true
 $RNFirebaseAsStaticFramework = true
+$RNGoogleMobileAdsAsStaticFramework = true
 
 target 'Moin' do
   config = use_native_modules!
