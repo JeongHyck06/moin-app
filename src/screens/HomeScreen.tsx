@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { onSafetyChange } from '../safety';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -26,6 +27,8 @@ export default function HomeScreen() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => onSafetyChange(() => { load(); }), [load]);
 
   // 그룹 만들기·참여에서 돌아올 때마다 새로 조회
   useFocusEffect(
