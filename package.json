@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "ios:build-simulator": "npm run ios:check-release && ENVFILE=.env.prod xcodebuild -workspace ios/Moin.xcworkspace -scheme Moin -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData build"
+    "ios:build-simulator": "npm run ios:check-release && ENVFILE=.env.prod xcodebuild -workspace ios/Moin.xcworkspace -scheme Moin -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData build",
+    "android:bundle": "cd android && ENVFILE=.env.prod ./gradlew bundleRelease",
+    "android:create-upload-key": "python3 scripts/create-upload-key.py"
   },
   "dependencies": {
     "@invertase/react-native-apple-authentication": "^2.5.1",
