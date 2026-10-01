@@ -6,7 +6,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { api, loadToken, onTokenChange, type LoginResponse, type Profile } from './src/api';
 import { observeAppleRevocation } from './src/socialLogin';
-import { registerPushToken } from './src/push';
+import TermsGate from './src/components/TermsGate';
+import { CurrentUserId } from './src/safety';
+import BlockedUsersScreen from './src/screens/BlockedUsersScreen';
 import { useNotificationOpen } from './src/useNotificationOpen';
 import UpdateGate from './src/components/UpdateGate';
 import type { RootStackParamList } from './src/navigation';
@@ -30,7 +32,6 @@ import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen
 import EditGroupNameScreen from './src/screens/EditGroupNameScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import { colors } from './src/theme';
-import FreezeShopScreen from './src/screens/FreezeShopScreen';
 import { SeenCheckInsProvider } from './src/SeenCheckInsProvider';
 
 const theme = {
@@ -81,19 +82,6 @@ function App() {
     });
   }, []);
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-    // 로그인 뒤에야 Authorization 헤더가 붙어 토큰을 등록할 수 있음
-    let off = () => {};
-    let cancelled = false;
-    registerPushToken().then(unsubscribe => {
-      if (cancelled) unsubscribe();
-      else off = unsubscribe;
-    });
-    return () => { cancelled = true; off(); };
-  }, [user]);
 
   if (!ready) {
     // 스플래시 디자인이 없어 캔버스 색으로만 채움
@@ -102,6 +90,7 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      <CurrentUserId.Provider value={user?.userId ?? null}>
       <SeenCheckInsProvider userId={user?.userId ?? null}>
       <NavigationContainer theme={theme} ref={nav}>
         <StatusBar barStyle="light-content" />
@@ -109,8 +98,8 @@ function App() {
           {/* 로그인 여부로 스택 전환, 토큰은 AsyncStorage 에 남아 재시작해도 유지 */}
           {user ? (
             <>
-              <Stack.Screen name="Main" component={MainTabs} />
-              <Stack.Screen name="FreezeShop" component={FreezeShopScreen} />
+              <Stack.Screen name="Main">{() => <TermsGate key={user.userId}><MainTabs /></TermsGate>}</Stack.Screen>
+              <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} />
               <Stack.Screen name="CreateGroup1" component={CreateGroup1Screen} />
               <Stack.Screen name="CreateGroup2" component={CreateGroup2Screen} />
               <Stack.Screen name="CreateGroup3" component={CreateGroup3Screen} />
@@ -134,6 +123,7 @@ function App() {
         <UpdateGate />
       </NavigationContainer>
       </SeenCheckInsProvider>
+      </CurrentUserId.Provider>
     </SafeAreaProvider>
   );
 }
