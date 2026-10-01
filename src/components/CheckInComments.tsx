@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, BackHandler, Easing, FlatList, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SafetyActions from './SafetyActions';
 import { api, avatarUrl, type CheckInComment, type CommentPage } from '../api';
 import { colors, spacing } from '../theme';
 import { useReducedMotion } from '../useReducedMotion';
@@ -155,6 +156,7 @@ export default function CheckInComments({ groupId, checkInId, name, onClose }: P
                       <View style={styles.content}>
                         <Text style={styles.author}>{item.nickname}</Text>
                         <Text style={styles.body}>{item.body}</Text>
+                        <SafetyActions groupId={groupId} userId={item.userId} kind="COMMENT" targetId={item.id} onHidden={() => setItems(previous => previous.filter(c => c.userId !== item.userId))} />
                         <Text style={styles.meta}>{new Date(item.createdAt).toLocaleString('ko-KR')}</Text>
                       </View>
                     </View>
