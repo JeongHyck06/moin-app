@@ -94,6 +94,19 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def signingProperties = new Properties()
+def signingFile = rootProject.file("keystore.properties")
+if (signingFile.exists()) signingFile.withInputStream { signingProperties.load(it) }
+def releaseRequested = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
+if (releaseRequested) {
+    ["storeFile", "storePassword", "keyAlias", "keyPassword"].each { key ->
+        if (!signingProperties.getProperty(key)) throw new GradleException("출시 서명 설정 누락: ${key}")
+    }
+    def apiUrl = project.env.get("API_BASE_URL") ?: ""
+    if (!apiUrl.startsWith("https://") || apiUrl.contains("localhost")) throw new GradleException("출시 API는 운영 HTTPS 주소여야 합니다")
+    if (!(project.env.get("KAKAO_APP_KEY") ?: "").matches("[0-9a-fA-F]{32}")) throw new GradleException("출시 카카오 키를 확인하세요")
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -107,8 +120,8 @@ android {
         applicationId "com.moin"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.0.0"
 
         // 키가 없으면 빈 문자열, manifest 스킴만 안 붙고 빌드는 통과
         def kakaoAppKey = project.env.get("KAKAO_APP_KEY") ?: ""
@@ -116,6 +129,14 @@ android {
         resValue "string", "kakao_app_key", kakaoAppKey
     }
     signingConfigs {
+        release {
+            if (signingFile.exists()) {
+                storeFile rootProject.file(signingProperties.getProperty("storeFile"))
+                storePassword signingProperties.getProperty("storePassword")
+                keyAlias signingProperties.getProperty("keyAlias")
+                keyPassword signingProperties.getProperty("keyPassword")
+            }
+        }
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
@@ -128,9 +149,7 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }

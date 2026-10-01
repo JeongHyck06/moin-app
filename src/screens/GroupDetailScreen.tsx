@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { onSafetyChange } from '../safety';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -25,6 +26,7 @@ export default function GroupDetailScreen({ navigation, route }: NativeStackScre
   const seen = useSeenCheckIns();
 
   // 인증하고 돌아오면 스트릭·진행도가 바뀌므로 포커스마다 다시 조회
+  useEffect(() => onSafetyChange(() => { api<GroupDetail>('GET', `/groups/${id}`).then(setDetail).catch(() => {}); }), [id]);
   useFocusEffect(
     useCallback(() => {
       api<GroupDetail>('GET', `/groups/${id}`)

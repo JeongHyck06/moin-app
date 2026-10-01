@@ -85,3 +85,8 @@ GoogleService-Info.plist
 
 # react-native-config 가 빌드마다 새로 만드는 파일
 ios/tmp.xcconfig
+
+# 출시 업로드 키와 비밀번호
+android/keystore.properties
+android/signing/
+*.jks

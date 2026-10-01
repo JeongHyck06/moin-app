@@ -8,6 +8,8 @@ import type { RootStackParamList } from '../navigation';
 import MemberAvatar from '../components/MemberAvatar';
 import CheckInComments from '../components/CheckInComments';
 import StoryPager from '../components/StoryPager';
+import SafetyActions from '../components/SafetyActions';
+import { onSafetyChange } from '../safety';
 
 const BG = '#17171A';
 
@@ -43,6 +45,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
     };
   }, [groupId, date, retry]);
 
+  useEffect(() => onSafetyChange(() => setRetry(n => n + 1)), []);
   const members = feed?.members ?? [];
   const current = members[index];
 
@@ -81,6 +84,7 @@ export default function FeedScreen({ navigation, route }: NativeStackScreenProps
           ) : feed ? <Text style={styles.placeholder}>이 날은 영상이 없어요</Text> : <ActivityIndicator color="#FFFFFF" accessibilityLabel="선택한 날짜 인증 불러오는 중" />}
         </View>
       )}
+      {current && <SafetyActions groupId={groupId} userId={current.userId} kind={current.checkInId == null ? "USER" : "CHECK_IN"} targetId={current.checkInId ?? current.userId} />}
       {current?.checkInId != null && <Pressable accessibilityRole="button" accessibilityLabel="댓글 열기" style={styles.dateButton} onPress={() => setCommentsOpen(true)}><Text style={styles.nameText}>댓글</Text></Pressable>}
       {commentsOpen && current?.checkInId != null && <CheckInComments key={current.checkInId} groupId={groupId} checkInId={current.checkInId} name={current.nickname} onClose={() => setCommentsOpen(false)} />}
     </View>

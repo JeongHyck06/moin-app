@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../theme';
 import CheckInComments from './CheckInComments';
 import StoryPager from './StoryPager';
+import SafetyActions from './SafetyActions';
 
 type Certification = { userId: number; name: string; path: string; checkInId: number | null };
 type Props = { groupId: number; items: Certification[]; initialUserId: number; period: string; onClose: () => void };
@@ -34,6 +35,7 @@ export default function CheckInViewer({ groupId, items, initialUserId, period, o
         </View>
         <StoryPager items={items} index={index} onIndexChange={next => { setIndex(next); setPaused(false); }} paused={paused} commentsOpen={commentsOpen} onComments={() => setCommentsOpen(true)} />
         <View style={styles.footer}>
+          {current.checkInId != null && <SafetyActions groupId={groupId} userId={current.userId} kind="CHECK_IN" targetId={current.checkInId} onHidden={onClose} />}
           {current.checkInId != null && <Pressable accessibilityRole="button" accessibilityLabel="댓글 열기" style={styles.close} onPress={() => setCommentsOpen(true)}><Text style={styles.closeText}>댓글</Text></Pressable>}
           <Pressable accessibilityRole="button" style={styles.close} onPress={() => setPaused(value => !value)}>
             <Text style={styles.closeText}>{paused ? '재생' : '일시정지'}</Text>

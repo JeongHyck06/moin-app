@@ -7,6 +7,7 @@ export type CreateGroupStep4Params = CreateGroupStep3Params & { resetTime: strin
 export type RootStackParamList = {
   Login: undefined;
   Main: undefined;
+  BlockedUsers: undefined;
   CreateGroup1: undefined;
   CreateGroup2: { name: string };
   CreateGroup3: CreateGroupStep3Params;
