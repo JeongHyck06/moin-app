@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { api, ApiError, clearToken, setToken, type MyGroup, type Profile } from '../api';
@@ -7,6 +7,7 @@ import { useSeenCheckIns } from '../SeenCheckInsProvider';
 import { clearSocialLogin } from '../socialLogin';
 import { currentPushToken, forgetPushToken } from '../push';
 import Header from '../components/Header';
+import { openLegal } from '../legal';
 import ListRow from '../components/ListRow';
 import MemberAvatar from '../components/MemberAvatar';
 import StreakBadge from '../components/StreakBadge';
@@ -114,9 +115,12 @@ export default function MyPageScreen() {
           {groups.length === 0 && <ListRow title="아직 그룹이 없어요" />}
         </View>
         <View style={card}>
-          <ListRow title="프리즈 보관함" subtitle="1개 1,000원 · 광고 보상 주 1회" chevron separator onPress={() => navigation.navigate('FreezeShop')} />
-          <ListRow title="알림 설정" separator={Platform.OS === 'ios'} chevron onPress={() => navigation.navigate('NotificationSettings')} />
-          {Platform.OS === 'ios' && <ListRow title="광고 추적 설정" subtitle="허용하지 않아도 앱을 이용할 수 있어요" chevron onPress={() => { Linking.openSettings().catch(() => Alert.alert('설정 열기 실패', '기기 설정에서 모인을 찾아주세요')); }} />}
+
+          <ListRow title="차단한 사용자" chevron separator onPress={() => navigation.navigate('BlockedUsers')} />
+          <ListRow title="개인정보처리방침" chevron separator onPress={() => openLegal('privacy')} />
+          <ListRow title="이용약관·커뮤니티 규칙" chevron separator onPress={() => openLegal('terms')} />
+          <ListRow title="고객지원" chevron separator onPress={() => openLegal('support')} />
+          <ListRow title="알림 설정"  chevron onPress={() => navigation.navigate('NotificationSettings')} />
         </View>
         <View style={card}>
           <ListRow title={loggingOut ? '로그아웃 중…' : '로그아웃'} separator onPress={loggingOut || deleting ? undefined : logout} />
