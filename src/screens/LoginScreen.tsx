@@ -7,6 +7,7 @@ import { api, setToken, type LoginResponse } from '../api';
 import { DEV_LOGIN_ENABLED, KAKAO_APP_KEY } from '../config';
 import { appleLoginSupported, loginWithApple, loginWithGoogle } from '../socialLogin';
 import Button from '../components/Button';
+import { openLegal } from '../legal';
 import StatusIcon from '../components/StatusIcon';
 import { colors, radius, spacing } from '../theme';
 
@@ -79,6 +80,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (user: LoginResponse
         <Text style={styles.sub}>3초 영상으로 인증하고, 같이 스트릭을 쌓아요</Text>
       </ScrollView>
       <View style={styles.actions}>
+      <Pressable accessibilityRole="link" onPress={() => openLegal('privacy')} style={styles.legalLink}><Text style={{ color: colors.textSecondary }}>개인정보처리방침</Text></Pressable>
       <Button
         label={DEV_LOGIN_ENABLED ? '개발용 로그인' : '카카오로 시작하기'}
         variant="kakao"
@@ -113,6 +115,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (user: LoginResponse
 const TILE = 130;
 
 const styles = StyleSheet.create({
+  legalLink: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   screen: { flex: 1, backgroundColor: colors.canvas },
   body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 20, paddingHorizontal: spacing.lg, paddingVertical: 20 },
   logo: { fontSize: 22, fontWeight: '900', color: colors.accent },
